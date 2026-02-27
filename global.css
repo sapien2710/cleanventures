@@ -1,3 +1,35 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Light theme (default) ─────────────────────────────────────────────────── */
+:root {
+  --color-primary: #2D7D46;
+  --color-primaryLight: #E8F5EC;
+  --color-accent: #F5A623;
+  --color-background: #F7F9F7;
+  --color-surface: #FFFFFF;
+  --color-foreground: #1A2E1E;
+  --color-muted: #6B7B6E;
+  --color-border: #D8E8DB;
+  --color-success: #22C55E;
+  --color-warning: #F5A623;
+  --color-error: #EF4444;
+  --color-tint: #2D7D46;
+}
+
+/* ── Dark theme ─────────────────────────────────────────────────────────────── */
+.dark {
+  --color-primary: #4CAF72;
+  --color-primaryLight: #1A3D26;
+  --color-accent: #F5A623;
+  --color-background: #111814;
+  --color-surface: #1C2420;
+  --color-foreground: #E8F0EA;
+  --color-muted: #8FA494;
+  --color-border: #2A3D30;
+  --color-success: #4ADE80;
+  --color-warning: #FBBF24;
+  --color-error: #F87171;
+  --color-tint: #4CAF72;
+}
