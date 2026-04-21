@@ -276,27 +276,24 @@ export default function VenturesScreen() {
       </View>
 
       {/* Tab switcher */}
-      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 16, backgroundColor: colors.surface, borderRadius: 16, padding: 5, borderWidth: 1, borderColor: colors.border, gap: 4 }}>
-        {([
-          { key: 'mine' as MainTab, label: 'My Ventures' },
-          { key: 'discover' as MainTab, label: 'Discover' },
-        ] as const).map(tab => (
+      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 16, backgroundColor: colors.surface, borderRadius: 14, padding: 4, borderWidth: 1, borderColor: colors.border }}>
+        {([{ key: 'mine' as MainTab, label: 'My Ventures' }, { key: 'discover' as MainTab, label: 'Discover' }] as const).map((tab, idx) => (
           <Pressable
             key={tab.key}
             onPress={() => setActiveTab(tab.key)}
             style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.8 : 1 }]}
           >
             <View style={[
-              { borderRadius: 12, paddingVertical: 11, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
+              { borderRadius: 10, paddingVertical: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
               activeTab === tab.key
-                ? { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 }
-                : {},
+                ? { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 4, elevation: 4 }
+                : { backgroundColor: 'transparent' },
             ]}>
               <Text style={{
                 fontSize: 14,
-                fontWeight: '700',
-                letterSpacing: 0.1,
+                fontWeight: activeTab === tab.key ? '700' : '500',
                 color: activeTab === tab.key ? 'white' : colors.muted,
+                letterSpacing: 0.1,
               }}>
                 {tab.label}
               </Text>

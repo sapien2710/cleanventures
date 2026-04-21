@@ -67,7 +67,7 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
         style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
         onPress={step === 'processing' ? undefined : handleClose}
       >
-        <Pressable onPress={() => {}} style={{ backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: 40 }}>
+        <Pressable onPress={() => {}} style={{ backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: 48 }}>
           <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginTop: 12, marginBottom: 20 }} />
 
           {step === 'success' ? (
@@ -135,12 +135,19 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
               </Pressable>
             </View>
           ) : (
-            <View style={{ paddingHorizontal: 20, gap: 18 }}>
-              <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground }}>Top Up Wallet</Text>
+            <View style={{ paddingHorizontal: 20, gap: 20 }}>
+              <Text style={{ fontSize: 22, fontWeight: '800', color: colors.foreground }}>Top Up Wallet</Text>
+
+              {/* Amount input */}
               <View style={{ gap: 8 }}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted }}>Enter Amount</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: colors.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: colors.background, gap: 6 }}>
-                  <Text style={{ fontSize: 20, fontWeight: '700', color: colors.primary }}>₹</Text>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.8 }}>Enter Amount</Text>
+                <View style={{
+                  flexDirection: 'row', alignItems: 'center',
+                  borderWidth: 2, borderColor: numericAmount >= 10 ? colors.primary : colors.border,
+                  borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14,
+                  backgroundColor: colors.background, gap: 6,
+                }}>
+                  <Text style={{ fontSize: 24, fontWeight: '700', color: colors.primary }}>₹</Text>
                   <TextInput
                     value={amount}
                     onChangeText={handleCustomAmount}
@@ -148,22 +155,24 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
                     placeholderTextColor={colors.muted}
                     keyboardType="number-pad"
                     returnKeyType="done"
-                    style={{ flex: 1, fontSize: 22, fontWeight: '700', color: colors.foreground }}
+                    style={{ flex: 1, fontSize: 28, fontWeight: '700', color: colors.foreground }}
                   />
                 </View>
               </View>
-              <View style={{ gap: 8 }}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted }}>Quick Select</Text>
+
+              {/* Quick select presets */}
+              <View style={{ gap: 10 }}>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.8 }}>Quick Select</Text>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   {TOPUP_PRESETS.map(preset => (
                     <Pressable key={preset} onPress={() => handlePreset(preset)} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, flex: 1 }]}>
                       <View style={[
-                        { paddingVertical: 10, borderRadius: 12, alignItems: 'center', borderWidth: 1.5 },
+                        { paddingVertical: 12, borderRadius: 14, alignItems: 'center', borderWidth: 2 },
                         selectedPreset === preset
                           ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                          : { backgroundColor: colors.background, borderColor: colors.border },
+                          : { backgroundColor: colors.surface, borderColor: colors.border },
                       ]}>
-                        <Text style={{ fontSize: 13, fontWeight: '700', color: selectedPreset === preset ? 'white' : colors.foreground }}>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: selectedPreset === preset ? 'white' : colors.foreground }}>
                           ₹{preset >= 1000 ? `${preset / 1000}K` : preset}
                         </Text>
                       </View>

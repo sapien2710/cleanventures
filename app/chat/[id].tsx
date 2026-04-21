@@ -401,7 +401,7 @@ export default function ChatScreen() {
         />
 
         {/* Input bar */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 10, paddingBottom: Math.max(insets.bottom, 10) + 4, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface }}>
           {/* Attach button */}
           <Pressable
             onPress={() => setShowAttachMenu(!showAttachMenu)}
@@ -436,7 +436,7 @@ export default function ChatScreen() {
 
         {/* Attach menu */}
         {showAttachMenu && (
-          <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 12, gap: 12, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border }}>
+          <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12, paddingBottom: Math.max(insets.bottom, 12) + 4, gap: 16, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border }}>
             <Pressable
               onPress={handlePickImage}
               style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, alignItems: 'center', gap: 6 }]}

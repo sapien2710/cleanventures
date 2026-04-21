@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Alert, FlatList, Image, Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
@@ -13,7 +13,6 @@ import { useNotifications } from "@/lib/notifications-store";
 
 type CartTab = 'checkout' | 'history';
 
-// ─── Order History Item ───────────────────────────────────────────────────────
 const STATIC_ORDER_HISTORY = [
   { id: 'o1', date: 'Feb 18, 2026', items: 'Gloves ×4, Masks ×2', total: 420, wallet: 'Personal Wallet', status: 'Delivered' },
   { id: 'o2', date: 'Feb 10, 2026', items: 'Trash Bags ×3', total: 240, wallet: 'LBS Road Cleanup', status: 'Delivered' },
@@ -34,17 +33,14 @@ export default function CartScreen() {
   const { addNotification } = useNotifications();
   const personalBalance = cartAuthUser ? getBalance(cartAuthUser.username) : 0;
 
-  // Group pending items by wallet destination
   const pendingItems = items.filter(i => i.status === 'pending');
   const purchasedItems = items.filter(i => i.status === 'purchased');
 
-  // Build wallet options: personal + ventures where user is buyer or co-owner
   const myVentures = useMemo(() => {
     if (!cartAuthUser) return [];
     return ventures.filter(v => {
       if (v.status !== 'proposed' && v.status !== 'ongoing') return false;
       const member = getMemberForUser(v.id, cartAuthUser.username);
-      // Legacy fallback: check ownerName contains username
       const isLegacyOwner = !member &&
         (v.ownerName === cartAuthUser.displayName ||
          v.ownerName?.toLowerCase().includes(cartAuthUser.username.toLowerCase()));
@@ -53,7 +49,6 @@ export default function CartScreen() {
     });
   }, [ventures, cartAuthUser, getMemberForUser]);
 
-  // Compute venture wallet balance from transactions (not stale currentFunding field)
   const getVentureBalance = useCallback((ventureId: string): number => {
     const txs = getVentureTxs(ventureId);
     return txs.reduce((sum, tx) => sum + tx.amount, 0);
@@ -73,13 +68,11 @@ export default function CartScreen() {
     return opts;
   }, [myVentures, personalBalance, getVentureBalance]);
 
-  // Items for the selected wallet
   const walletItems = selectedWalletKey === 'personal'
     ? pendingItems.filter(i => i.ventureId === null)
     : pendingItems.filter(i => i.ventureId === selectedWalletKey);
 
   const selectedWallet = walletOptions.find(w => w.key === selectedWalletKey);
-
   const subtotal = walletItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const delivery = walletItems.length > 0 ? 50 : 0;
   const total = subtotal + delivery;
@@ -88,7 +81,6 @@ export default function CartScreen() {
 
   const handleCheckout = () => {
     if (!hasItems || !hasEnoughFunds) return;
-
     Alert.alert(
       'Confirm Order',
       `Pay ₹${total} from ${selectedWallet?.label}?`,
@@ -98,34 +90,27 @@ export default function CartScreen() {
           text: 'Confirm',
           onPress: () => {
             const itemCount = walletItems.length;
-            const itemNames = walletItems.slice(0, 2).map(i => i.name).join(', ');
-            const moreItems = itemCount > 2 ? ` +${itemCount - 2} more` : '';
-            if (selectedWalletKey === 'personal') {
-              if (cartAuthUser) deductPersonal(cartAuthUser.username, total, 'Cart Checkout');
-              checkoutPersonal();
-              addNotification({
-                type: 'general',
-                title: 'Order Placed',
-                body: `₹${total} paid from Personal Wallet for ${itemNames}${moreItems}.`,
+            if (selectedWallet?.ventureId) {
+              checkoutVenture(selectedWallet.ventureId);
+              addVentureTx(selectedWallet.ventureId, {
+                id: `tx-${Date.now()}`,
+                type: 'debit',
+                amount: -total,
+                description: `Market purchase (${itemCount} item${itemCount !== 1 ? 's' : ''})`,
+                date: new Date().toISOString().split('T')[0],
               });
             } else {
-              // Deduct from venture wallet by adding a negative transaction
-              addVentureTx(selectedWalletKey, {
-                id: `tx-cart-${Date.now()}`,
-                ventureId: selectedWalletKey,
-                type: 'purchase',
-                amount: -total,
-                description: 'Supplies purchase',
-                timestamp: new Date().toISOString(),
-                username: cartAuthUser?.displayName ?? 'Unknown',
-              });
-              checkoutVenture(selectedWalletKey);
-              const ventureName = selectedWallet?.label ?? 'venture';
+              checkoutPersonal();
+              deductPersonal(cartAuthUser!.username, total);
+            }
+            if (cartAuthUser) {
               addNotification({
-                type: 'general',
-                title: 'Order Placed',
-                body: `₹${total} paid from ${ventureName} wallet for ${itemNames}${moreItems}.`,
-                ventureId: selectedWalletKey,
+                id: `notif-${Date.now()}`,
+                type: 'order',
+                title: 'Order Placed!',
+                message: `₹${total} paid from ${selectedWallet?.label}. ${itemCount} item${itemCount !== 1 ? 's' : ''} ordered.`,
+                timestamp: new Date().toISOString(),
+                read: false,
               });
             }
             setCheckedOut(true);
@@ -139,31 +124,43 @@ export default function CartScreen() {
   return (
     <ScreenContainer containerClassName="bg-background" edges={["top", "left", "right"]}>
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12, borderBottomWidth: 1 }} style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
-        <Pressable
-          onPress={() => router.back()}
-          style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-        >
-          <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
+      <View style={{
+        flexDirection: 'row', alignItems: 'center',
+        paddingHorizontal: 16, paddingVertical: 14, gap: 12,
+        borderBottomWidth: 1, borderColor: colors.border,
+        backgroundColor: colors.surface,
+      }}>
+        <Pressable onPress={() => router.back()} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
+          <IconSymbol name="chevron.left" size={22} color={colors.foreground} />
         </Pressable>
-        <Text className="text-lg font-bold flex-1" style={{ color: colors.foreground }}>Cart</Text>
+        <Text style={{ fontSize: 18, fontWeight: '700', flex: 1, color: colors.foreground }}>Cart</Text>
         {pendingCount > 0 && (
-          <View className="rounded-full px-2.5 py-0.5" style={{ backgroundColor: colors.primary }}>
-            <Text style={{ fontSize: 11, fontWeight: '700' }} style={{ color: 'white' }}>{pendingCount} pending</Text>
+          <View style={{ backgroundColor: colors.primary, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 }}>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: 'white' }}>{pendingCount} pending</Text>
           </View>
         )}
       </View>
 
-      {/* Tabs */}
-      <View style={{ flexDirection: 'row', borderBottomWidth: 1 }} style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
+      {/* Tab switcher */}
+      <View style={{
+        flexDirection: 'row', backgroundColor: colors.surface,
+        borderBottomWidth: 1, borderColor: colors.border,
+      }}>
         {(['checkout', 'history'] as CartTab[]).map(tab => (
           <Pressable
             key={tab}
             onPress={() => setActiveTab(tab)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, flex: 1 }]}
           >
-            <View style={{ paddingVertical: 12, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: activeTab === tab ? colors.primary : 'transparent' }}>
-              <Text style={{ fontSize: 14, fontWeight: '600', textTransform: 'capitalize', color: activeTab === tab ? colors.primary : colors.muted }}>
+            <View style={{
+              paddingVertical: 13, alignItems: 'center',
+              borderBottomWidth: 2.5,
+              borderBottomColor: activeTab === tab ? colors.primary : 'transparent',
+            }}>
+              <Text style={{
+                fontSize: 14, fontWeight: activeTab === tab ? '700' : '500',
+                color: activeTab === tab ? colors.primary : colors.muted,
+              }}>
                 {tab === 'checkout' ? 'Checkout' : 'Order History'}
               </Text>
             </View>
@@ -172,11 +169,15 @@ export default function CartScreen() {
       </View>
 
       {activeTab === 'checkout' ? (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 40 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, gap: 20, paddingBottom: 48 }}>
 
           {/* Success banner */}
           {checkedOut && (
-            <View style={{ backgroundColor: colors.success + '18', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.5, borderColor: colors.success + '40' }}>
+            <View style={{
+              backgroundColor: colors.success + '18', borderRadius: 16, padding: 16,
+              flexDirection: 'row', alignItems: 'center', gap: 12,
+              borderWidth: 1.5, borderColor: colors.success + '40',
+            }}>
               <IconSymbol name="checkmark.circle.fill" size={28} color={colors.success} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 15, fontWeight: '700', color: colors.success }}>Order Placed!</Text>
@@ -186,8 +187,8 @@ export default function CartScreen() {
           )}
 
           {/* Wallet selector */}
-          <View style={{ gap: 12 }}>
-            <Text style={{ fontSize: 16, fontWeight: '700' }} style={{ color: colors.foreground }}>Pay From Wallet</Text>
+          <View style={{ gap: 10 }}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.8 }}>Pay From Wallet</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
               {walletOptions.map(wallet => (
                 <Pressable
@@ -196,7 +197,7 @@ export default function CartScreen() {
                   style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
                 >
                   <View style={[
-                    { minWidth: 160, padding: 14, borderRadius: 16, borderWidth: 1.5, gap: 6 },
+                    { width: 168, padding: 14, borderRadius: 16, borderWidth: 1.5, gap: 4 },
                     selectedWalletKey === wallet.key
                       ? { borderColor: colors.primary, backgroundColor: colors.primaryLight }
                       : { borderColor: colors.border, backgroundColor: colors.surface },
@@ -205,9 +206,9 @@ export default function CartScreen() {
                       {wallet.label}
                     </Text>
                     <Text style={{ fontSize: 11, color: colors.muted }} numberOfLines={1}>{wallet.sublabel}</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: wallet.balance > 0 ? colors.success : colors.error }} />
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: wallet.balance > 0 ? colors.success : colors.error }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                      <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: wallet.balance > 0 ? colors.success : colors.error }} />
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: wallet.balance > 0 ? colors.success : colors.error }}>
                         ₹{wallet.balance.toLocaleString()}
                       </Text>
                     </View>
@@ -217,66 +218,73 @@ export default function CartScreen() {
             </ScrollView>
           </View>
 
-          {/* Items for selected wallet */}
-          <View style={{ gap: 12 }}>
+          {/* Items section */}
+          <View style={{ gap: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 16, fontWeight: '700' }} style={{ color: colors.foreground }}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.8 }}>
                 {selectedWallet?.label} Items
               </Text>
-              <Text style={{ fontSize: 11 }} style={{ color: colors.muted }}>{walletItems.length} item{walletItems.length !== 1 ? 's' : ''}</Text>
+              <Text style={{ fontSize: 12, color: colors.muted }}>{walletItems.length} item{walletItems.length !== 1 ? 's' : ''}</Text>
             </View>
 
             {walletItems.length === 0 ? (
-              <View className="rounded-2xl border p-8 items-center gap-3" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
-                <IconSymbol name="cart.fill" size={32} color={colors.muted} />
-                <Text style={{ fontSize: 13, textAlign: 'center' }} style={{ color: colors.muted }}>No pending items for this wallet.</Text>
-                <Text style={{ fontSize: 11, textAlign: 'center' }} style={{ color: colors.muted }}>Add products or services from the Market tab.</Text>
+              <View style={{
+                borderRadius: 16, borderWidth: 1, padding: 32,
+                alignItems: 'center', gap: 10,
+                backgroundColor: colors.surface, borderColor: colors.border,
+              }}>
+                <IconSymbol name="cart.fill" size={36} color={colors.muted} />
+                <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>No items yet</Text>
+                <Text style={{ fontSize: 12, textAlign: 'center', color: colors.muted, lineHeight: 18 }}>
+                  Add products or services from the Market tab.
+                </Text>
               </View>
             ) : (
-              <View className="rounded-2xl border overflow-hidden" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
+              <View style={{ borderRadius: 16, borderWidth: 1, overflow: 'hidden', backgroundColor: colors.surface, borderColor: colors.border }}>
                 {walletItems.map((item, index) => (
                   <View key={item.id}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
-                      <Image source={{ uri: item.image }} style={{ width: 44, height: 44, borderRadius: 10 }} resizeMode="cover" />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12, gap: 12 }}>
+                      <Image source={{ uri: item.image }} style={{ width: 48, height: 48, borderRadius: 10 }} resizeMode="cover" />
                       <View style={{ flex: 1, gap: 2 }}>
-                        <Text className="text-sm font-semibold" style={{ color: colors.foreground }} numberOfLines={1}>{item.name}</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }} numberOfLines={1}>{item.name}</Text>
                         {item.itemType === 'service' && (item as any).scheduledDate && (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                             <IconSymbol name="calendar" size={10} color={colors.muted} />
-                            <Text style={{ fontSize: 11 }} style={{ color: colors.muted }}>{(item as any).scheduledDate}</Text>
+                            <Text style={{ fontSize: 11, color: colors.muted }}>{(item as any).scheduledDate}</Text>
                           </View>
                         )}
-                        {/* Quantity stepper */}
                         {item.itemType === 'product' && (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 5 }}>
                             <Pressable
                               onPress={() => item.quantity <= 1 ? removeFromCart(item.id) : updateQty(item.id, item.quantity - 1)}
                               style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
                             >
-                              <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
-                                <Text style={{ fontSize: 14, color: item.quantity <= 1 ? colors.error : colors.foreground, lineHeight: 18 }}>{item.quantity <= 1 ? '×' : '−'}</Text>
+                              <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
+                                <Text style={{ fontSize: 15, color: item.quantity <= 1 ? colors.error : colors.foreground, lineHeight: 20 }}>{item.quantity <= 1 ? '×' : '−'}</Text>
                               </View>
                             </Pressable>
-                            <Text style={{ fontSize: 11, fontWeight: '700' }} style={{ color: colors.foreground }}>{item.quantity}</Text>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.foreground, minWidth: 20, textAlign: 'center' }}>{item.quantity}</Text>
                             <Pressable
                               onPress={() => updateQty(item.id, item.quantity + 1)}
                               style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
                             >
-                              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
-                                <Text style={{ fontSize: 14, color: 'white', lineHeight: 18 }}>+</Text>
+                              <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+                                <Text style={{ fontSize: 15, color: 'white', lineHeight: 20 }}>+</Text>
                               </View>
                             </Pressable>
                           </View>
                         )}
                       </View>
-                      <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '700' }} style={{ color: colors.foreground }}>₹{item.price * item.quantity}</Text>
+                      <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground }}>₹{item.price * item.quantity}</Text>
                         <Pressable onPress={() => removeFromCart(item.id)} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
                           <IconSymbol name="trash.fill" size={14} color={colors.error} />
                         </Pressable>
                       </View>
                     </View>
-                    {index < walletItems.length - 1 && <View style={{ height: 1, marginHorizontal: 16 }} style={{ backgroundColor: colors.border }} />}
+                    {index < walletItems.length - 1 && (
+                      <View style={{ height: 1, marginHorizontal: 14, backgroundColor: colors.border }} />
+                    )}
                   </View>
                 ))}
               </View>
@@ -285,32 +293,38 @@ export default function CartScreen() {
 
           {/* Order summary */}
           {hasItems && (
-            <View className="rounded-2xl border overflow-hidden" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
-              <View className="px-4 py-2.5 border-b" style={{ borderColor: colors.border }}>
-                <Text style={{ fontSize: 13, fontWeight: '700' }} style={{ color: colors.foreground }}>Order Summary</Text>
+            <View style={{ borderRadius: 16, borderWidth: 1, overflow: 'hidden', backgroundColor: colors.surface, borderColor: colors.border }}>
+              <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderColor: colors.border }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.foreground }}>Order Summary</Text>
               </View>
               {[
                 { label: 'Subtotal', value: `₹${subtotal}` },
                 { label: 'Delivery', value: `₹${delivery}` },
               ].map(row => (
                 <View key={row.label} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10 }}>
-                  <Text style={{ fontSize: 13 }} style={{ color: colors.muted }}>{row.label}</Text>
-                  <Text style={{ fontSize: 13 }} style={{ color: colors.foreground }}>{row.value}</Text>
+                  <Text style={{ fontSize: 13, color: colors.muted }}>{row.label}</Text>
+                  <Text style={{ fontSize: 13, color: colors.foreground }}>{row.value}</Text>
                 </View>
               ))}
-              <View style={{ height: 1, marginHorizontal: 16 }} style={{ backgroundColor: colors.border }} />
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
-                <Text style={{ fontSize: 16, fontWeight: '700' }} style={{ color: colors.foreground }}>Total</Text>
-                <Text style={{ fontSize: 16, fontWeight: '700' }} style={{ color: colors.primary }}>₹{total}</Text>
+              <View style={{ height: 1, marginHorizontal: 16, backgroundColor: colors.border }} />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.foreground }}>Total</Text>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.primary }}>₹{total}</Text>
               </View>
             </View>
           )}
 
-          {/* Insufficient funds warning */}
+          {/* Insufficient funds */}
           {hasItems && !hasEnoughFunds && (
-            <View style={{ backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 12, padding: 12, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <View style={{
+              backgroundColor: colors.error + '15', borderRadius: 12, padding: 12,
+              flexDirection: 'row', gap: 8, alignItems: 'center',
+              borderWidth: 1, borderColor: colors.error + '30',
+            }}>
               <IconSymbol name="exclamationmark.triangle.fill" size={16} color={colors.error} />
-              <Text className="text-xs flex-1" style={{ color: colors.error }}>Insufficient funds. Top up your wallet from the Account screen.</Text>
+              <Text style={{ fontSize: 12, flex: 1, color: colors.error, lineHeight: 17 }}>
+                Insufficient funds. Top up your wallet from the Account screen.
+              </Text>
             </View>
           )}
 
@@ -320,64 +334,107 @@ export default function CartScreen() {
             disabled={!hasItems || !hasEnoughFunds}
             style={({ pressed }) => [{ opacity: (pressed || !hasItems || !hasEnoughFunds) ? 0.5 : 1 }]}
           >
-            <View style={{ backgroundColor: hasItems && hasEnoughFunds ? colors.primary : colors.border, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
+            <View style={{
+              backgroundColor: hasItems && hasEnoughFunds ? colors.primary : colors.surface,
+              borderRadius: 16, paddingVertical: 16, alignItems: 'center',
+              borderWidth: 1, borderColor: hasItems && hasEnoughFunds ? colors.primary : colors.border,
+            }}>
               <Text style={{ fontWeight: '700', fontSize: 15, color: hasItems && hasEnoughFunds ? 'white' : colors.muted }}>
-                {hasItems ? `Pay ₹${total}` : 'No items to checkout'}
+                {hasItems ? (hasEnoughFunds ? `Pay ₹${total}` : 'Insufficient Funds') : 'No items to checkout'}
               </Text>
             </View>
           </Pressable>
 
-          {/* Purchased items section */}
+          {/* Purchased items */}
           {purchasedItems.length > 0 && (
-            <View style={{ gap: 12 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700' }} style={{ color: colors.foreground }}>Purchased Items</Text>
-              <View className="rounded-2xl border overflow-hidden" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
+            <View style={{ gap: 10 }}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.8 }}>Purchased</Text>
+              <View style={{ borderRadius: 16, borderWidth: 1, overflow: 'hidden', backgroundColor: colors.surface, borderColor: colors.border }}>
                 {purchasedItems.map((item, index) => (
                   <View key={item.id}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
-                      <Image source={{ uri: item.image }} style={{ width: 40, height: 40, borderRadius: 8, opacity: 0.7 }} resizeMode="cover" />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12, gap: 12 }}>
+                      <Image source={{ uri: item.image }} style={{ width: 40, height: 40, borderRadius: 8, opacity: 0.6 }} resizeMode="cover" />
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 13 }} style={{ color: colors.muted }} numberOfLines={1}>{item.name}</Text>
-                        {item.ventureName && <Text style={{ fontSize: 11 }} style={{ color: colors.muted }}>{item.ventureName}</Text>}
+                        <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>{item.name}</Text>
+                        {item.ventureName && <Text style={{ fontSize: 11, color: colors.muted }}>{item.ventureName}</Text>}
                       </View>
-                      <View style={{ backgroundColor: 'rgba(34,197,94,0.15)', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
-                        <Text style={{ fontSize: 11, fontWeight: '600' }} style={{ color: colors.success }}>Purchased</Text>
+                      <View style={{ backgroundColor: colors.success + '20', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: colors.success }}>Purchased</Text>
                       </View>
                     </View>
-                    {index < purchasedItems.length - 1 && <View style={{ height: 1, marginHorizontal: 16 }} style={{ backgroundColor: colors.border }} />}
+                    {index < purchasedItems.length - 1 && (
+                      <View style={{ height: 1, marginHorizontal: 14, backgroundColor: colors.border }} />
+                    )}
                   </View>
                 ))}
               </View>
             </View>
           )}
 
-          <Text style={{ fontSize: 11, textAlign: 'center' }} style={{ color: colors.muted }}>
+          <Text style={{ fontSize: 11, textAlign: 'center', color: colors.muted }}>
             By placing this order, you agree to community cleanup rules.
           </Text>
         </ScrollView>
       ) : (
+        /* Order History Tab */
         <FlatList
           data={STATIC_ORDER_HISTORY}
           keyExtractor={item => item.id}
-          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }}
+          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View style={{ borderRadius: 16, padding: 16, borderWidth: 1, gap: 8 }} style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: 13, fontWeight: '700' }} style={{ color: colors.foreground }}>{item.date}</Text>
-                <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: (item.status === 'Delivered' || item.status === 'Completed') ? 'rgba(34,197,94,0.15)' : 'rgba(245,166,35,0.15)' }}>
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: (item.status === 'Delivered' || item.status === 'Completed') ? colors.success : colors.warning }}>
-                    {item.status}
-                  </Text>
+          ListHeaderComponent={
+            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+              Recent Orders
+            </Text>
+          }
+          renderItem={({ item }) => {
+            const isComplete = item.status === 'Delivered' || item.status === 'Completed';
+            return (
+              <View style={{
+                borderRadius: 16, borderWidth: 1,
+                backgroundColor: colors.surface, borderColor: colors.border,
+                overflow: 'hidden',
+              }}>
+                {/* Order header row */}
+                <View style={{
+                  flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                  paddingHorizontal: 16, paddingVertical: 12,
+                  borderBottomWidth: 1, borderColor: colors.border,
+                }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{
+                      width: 32, height: 32, borderRadius: 16,
+                      backgroundColor: isComplete ? colors.success + '20' : colors.warning + '20',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <IconSymbol
+                        name={isComplete ? "checkmark.circle.fill" : "clock.fill"}
+                        size={16}
+                        color={isComplete ? colors.success : colors.warning}
+                      />
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.foreground }}>{item.date}</Text>
+                      <Text style={{ fontSize: 11, color: colors.muted }}>{item.wallet}</Text>
+                    </View>
+                  </View>
+                  <View style={{
+                    borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4,
+                    backgroundColor: isComplete ? colors.success + '18' : colors.warning + '18',
+                  }}>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: isComplete ? colors.success : colors.warning }}>
+                      {item.status}
+                    </Text>
+                  </View>
+                </View>
+                {/* Order body */}
+                <View style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 13, color: colors.muted, flex: 1, marginRight: 12 }} numberOfLines={2}>{item.items}</Text>
+                  <Text style={{ fontSize: 17, fontWeight: '700', color: colors.primary }}>₹{item.total}</Text>
                 </View>
               </View>
-              <Text style={{ fontSize: 13 }} style={{ color: colors.muted }}>{item.items}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: 11 }} style={{ color: colors.muted }}>{item.wallet}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '700' }} style={{ color: colors.primary }}>₹{item.total}</Text>
-              </View>
-            </View>
-          )}
+            );
+          }}
         />
       )}
     </ScreenContainer>

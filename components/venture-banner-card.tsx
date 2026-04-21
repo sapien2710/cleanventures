@@ -35,18 +35,32 @@ export function VentureBannerCard({ venture, onPress, compact = false, memberCou
           <View style={{ position: 'relative' }}>
             <Image
               source={{ uri: venture.images[0] }}
-              style={{ width: '100%', height: 144 }}
+              style={{ width: '100%', height: 160 }}
               resizeMode="cover"
             />
-            {/* Badges overlay — always white text on dark pill */}
-            <View style={{ position: 'absolute', top: 8, left: 8, flexDirection: 'row', gap: 6 }}>
-              <View style={{ backgroundColor: 'rgba(0,0,0,0.68)', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4 }}>
-                <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '700' }}>
+            {/* Dark gradient scrim at bottom for badge readability */}
+            <View style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0, height: 56,
+              backgroundColor: 'rgba(0,0,0,0)',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.65), transparent)',
+            }} />
+            {/* Badges — bottom-left, overlaid on image */}
+            <View style={{ position: 'absolute', bottom: 10, left: 10, flexDirection: 'row', gap: 6 }}>
+              <View style={{
+                backgroundColor: venture.isFree ? 'rgba(22,163,74,0.85)' : 'rgba(0,0,0,0.72)',
+                borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4,
+                borderWidth: 1, borderColor: venture.isFree ? 'rgba(134,239,172,0.4)' : 'rgba(255,255,255,0.15)',
+              }}>
+                <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '700', letterSpacing: 0.2 }}>
                   {venture.isFree ? 'Free' : `₹${venture.eac}`}
                 </Text>
               </View>
-              <View style={{ backgroundColor: 'rgba(0,0,0,0.68)', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4 }}>
-                <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '700' }}>
+              <View style={{
+                backgroundColor: venture.status === 'ongoing' ? 'rgba(161,98,7,0.85)' : venture.status === 'proposed' ? 'rgba(37,99,235,0.85)' : 'rgba(0,0,0,0.72)',
+                borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4,
+                borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+              }}>
+                <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '700', letterSpacing: 0.2 }}>
                   {statusLabel}
                 </Text>
               </View>
