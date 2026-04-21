@@ -23,7 +23,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
         <Image source={{ uri: product.image }} style={{ width: '100%', height: 112 }} resizeMode="cover" />
         {!product.inStock && (
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' }}>
-            <Text className="text-xs font-bold" style={{ color: 'white' }}>Out of Stock</Text>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: 'white' }}>Out of Stock</Text>
           </View>
         )}
         {product.canRent && (
@@ -32,13 +32,13 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
           </View>
         )}
       </View>
-      <View style={{ padding: 10, gap: 6 }}>
-        <Text className="text-sm font-semibold" style={{ color: colors.foreground }} numberOfLines={2}>{product.name}</Text>
+      <View style={{ padding: 12, gap: 6 }}>
+        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.foreground, lineHeight: 18 }} numberOfLines={2}>{product.name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>
-            <Text className="text-base font-bold" style={{ color: colors.primary }}>₹{product.price}</Text>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: colors.primary }}>₹{product.price}</Text>
             {product.canRent && (
-              <Text className="text-xs" style={{ color: colors.muted }}>Rent: ₹{product.rentPrice}/day</Text>
+              <Text style={{ fontSize: 11, color: colors.muted }}>Rent: ₹{product.rentPrice}/day</Text>
             )}
           </View>
           <Pressable
@@ -64,13 +64,13 @@ function ServiceCard({ service, onAddToCart }: { service: Service; onAddToCart: 
       <Image source={{ uri: service.image }} style={{ width: 80, height: 80 }} resizeMode="cover" />
       <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
         <View>
-          <Text className="text-sm font-semibold" style={{ color: colors.foreground }} numberOfLines={1}>{service.name}</Text>
-          <Text className="text-xs mt-0.5" style={{ color: colors.muted }} numberOfLines={2}>{service.description}</Text>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }} numberOfLines={1}>{service.name}</Text>
+          <Text style={{ fontSize: 12, marginTop: 3, color: colors.muted, lineHeight: 17 }} numberOfLines={2}>{service.description}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
           <View>
-            <Text className="text-sm font-bold" style={{ color: colors.primary }}>₹{service.price}</Text>
-            <Text className="text-xs" style={{ color: colors.muted }}>{service.unit}</Text>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.primary }}>₹{service.price}</Text>
+            <Text style={{ fontSize: 11, color: colors.muted }}>{service.unit}</Text>
           </View>
           <Pressable
             onPress={onAddToCart}
@@ -402,22 +402,22 @@ export default function MarketScreen() {
     <ScreenContainer containerClassName="bg-background">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 pt-4 pb-3">
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 }}>
           <View>
-            <Text className="text-2xl font-bold" style={{ color: colors.foreground }}>Marketplace</Text>
-            <Text className="text-sm" style={{ color: colors.muted }}>Supplies for your cleanup</Text>
+            <Text style={{ fontSize: 28, fontWeight: '800', color: colors.foreground, letterSpacing: -0.5 }}>Marketplace</Text>
+            <Text style={{ fontSize: 14, color: colors.muted, marginTop: 2 }}>Supplies for your cleanup</Text>
           </View>
           <Pressable
             onPress={() => router.push('/cart' as any)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
             <View style={{ position: 'relative' }}>
-              <View className="rounded-full p-2.5 border" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
+              <View style={{ borderRadius: 22, padding: 10, borderWidth: 1, backgroundColor: colors.surface, borderColor: colors.border }}>
                 <IconSymbol name="cart.fill" size={22} color={colors.primary} />
               </View>
               {pendingCount > 0 && (
-                <View className="absolute -top-1 -right-1 rounded-full w-5 h-5 items-center justify-center" style={{ backgroundColor: colors.error }}>
-                  <Text className="text-xs font-bold" style={{ color: 'white' }}>{pendingCount}</Text>
+                <View style={{ position: 'absolute', top: -4, right: -4, borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.error, paddingHorizontal: 3 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: 'white' }}>{pendingCount}</Text>
                 </View>
               )}
             </View>
@@ -446,9 +446,9 @@ export default function MarketScreen() {
         </ScrollView>
 
         {/* Products section */}
-        <View className="px-4">
-          <Text className="text-lg font-bold mb-3" style={{ color: colors.foreground }}>Products</Text>
-          <View className="flex-row flex-wrap gap-3">
+        <View style={{ paddingHorizontal: 16 }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground, marginBottom: 12 }}>Products</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
             {filteredProducts.map(product => (
               <ProductCard
                 key={product.id}
@@ -460,9 +460,9 @@ export default function MarketScreen() {
         </View>
 
         {/* Services section */}
-        <View className="px-4 mt-6">
-          <Text className="text-lg font-bold mb-3" style={{ color: colors.foreground }}>Services</Text>
-          <View className="gap-3">
+        <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground, marginBottom: 12 }}>Services</Text>
+          <View style={{ gap: 12 }}>
             {MOCK_SERVICES.map(service => (
               <ServiceCard
                 key={service.id}

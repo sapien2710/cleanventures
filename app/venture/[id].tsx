@@ -223,16 +223,16 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 32 }}>
       {/* Capacity */}
-      <View className="rounded-2xl p-4 border gap-3" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
-        <Text className="text-sm font-semibold" style={{ color: colors.foreground }}>Volunteer Capacity</Text>
+      <View style={{ borderRadius: 16, padding: 16, borderWidth: 1, gap: 10, backgroundColor: colors.surface, borderColor: colors.border }}>
+        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Volunteer Capacity</Text>
         <HealthBar value={venture.volunteersJoined} max={venture.volunteersRequired} variant="capacity" showCount />
       </View>
 
       {/* Funding (paid only) */}
       {!venture.isFree && (
-        <View className="rounded-2xl p-4 border gap-3" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-semibold" style={{ color: colors.foreground }}>Project Funding</Text>
+        <View style={{ borderRadius: 16, padding: 16, borderWidth: 1, gap: 10, backgroundColor: colors.surface, borderColor: colors.border }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Project Funding</Text>
             <BadgeChip label={`EAC: ₹${venture.eac}`} variant="paid" />
           </View>
           <HealthBar value={balance} max={venture.budget} variant="funding" showCount />
@@ -240,44 +240,50 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
       )}
 
       {/* Description */}
-      <View className="gap-2">
-        <Text className="text-base font-bold" style={{ color: colors.foreground }}>About this Venture</Text>
-        <Text className="text-sm leading-relaxed" style={{ color: colors.muted }}>{venture.description}</Text>
+      <View style={{ gap: 8 }}>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: colors.foreground }}>About this Venture</Text>
+        <Text style={{ fontSize: 14, lineHeight: 22, color: colors.muted }}>{venture.description}</Text>
       </View>
 
       {/* Details */}
-      <View className="rounded-2xl p-4 border gap-3" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
+      <View style={{ borderRadius: 16, borderWidth: 1, overflow: 'hidden', backgroundColor: colors.surface, borderColor: colors.border }}>
         {[
           { icon: 'calendar' as const, label: 'Date', value: venture.startDate },
           { icon: 'location.fill' as const, label: 'Location', value: venture.location },
           { icon: 'person.2.fill' as const, label: 'Owner', value: `${venture.ownerName} · ⭐ ${venture.ownerStats.rating} · ${venture.ownerStats.completed} ventures` },
-        ].map(item => (
-          <View key={item.label} className="flex-row gap-3 items-start">
-            <View className="w-8 h-8 rounded-lg items-center justify-center mt-0.5" style={{ backgroundColor: colors.primaryLight }}>
-              <IconSymbol name={item.icon} size={16} color={colors.primary} />
+        ].map((item, index, arr) => (
+          <View key={item.label} style={[
+            { flexDirection: 'row', gap: 12, alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 },
+            index < arr.length - 1 ? { borderBottomWidth: 1, borderBottomColor: colors.border } : {},
+          ]}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primaryLight }}>
+              <IconSymbol name={item.icon} size={18} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text className="text-xs font-medium" style={{ color: colors.muted }}>{item.label}</Text>
-              <Text className="text-sm" style={{ color: colors.foreground }}>{item.value}</Text>
+              <Text style={{ fontSize: 11, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 }}>{item.label}</Text>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: colors.foreground, lineHeight: 20 }}>{item.value}</Text>
             </View>
           </View>
         ))}
       </View>
 
       {/* Tags */}
-      <View className="flex-row flex-wrap gap-2">
-        {venture.tags.map(tag => (
-          <View key={tag} className="rounded-full px-3 py-1" style={{ backgroundColor: colors.primaryLight }}>
-            <Text className="text-xs font-medium capitalize" style={{ color: colors.primary }}>{tag}</Text>
-          </View>
-        ))}
+      <View style={{ gap: 8 }}>
+        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Tags</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {venture.tags.map(tag => (
+            <View key={tag} style={{ borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.primaryLight }}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary, textTransform: 'capitalize' }}>{tag}</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {/* Gallery */}
-      <View className="gap-2">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-base font-bold" style={{ color: colors.foreground }}>Gallery</Text>
-          <Text className="text-xs" style={{ color: colors.muted }}>{allImages.length} photo{allImages.length !== 1 ? 's' : ''}</Text>
+      <View style={{ gap: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.foreground }}>Gallery</Text>
+          <Text style={{ fontSize: 12, color: colors.muted }}>{allImages.length} photo{allImages.length !== 1 ? 's' : ''}</Text>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
           {allImages.map((img, i) => (
@@ -340,8 +346,8 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
           onPress={onJoinPress}
           style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
         >
-          <View className="rounded-2xl py-4 items-center" style={{ backgroundColor: colors.primary }}>
-            <Text className="font-bold text-base" style={{ color: 'white' }}>Request to Join</Text>
+          <View style={{ borderRadius: 16, paddingVertical: 16, alignItems: 'center' }} style={{ backgroundColor: colors.primary }}>
+            <Text style={{ fontSize: 15, fontWeight: '700' }} style={{ color: 'white' }}>Request to Join</Text>
           </View>
         </Pressable>
       )}
@@ -357,14 +363,14 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
       {/* Finished venture — cannot join */}
       {!myRole && venture.status === 'finished' && (
         <View style={{ backgroundColor: colors.border + '66', borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
-          <Text className="font-semibold text-sm" style={{ color: colors.muted }}>This venture has finished</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600' }} style={{ color: colors.muted }}>This venture has finished</Text>
         </View>
       )}
 
       {myRole && (
         <View style={{ borderRadius: 16, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.primary + '4D', backgroundColor: colors.primaryLight }}>
-          <Text className="font-semibold text-sm" style={{ color: colors.primary }}>You are part of this venture</Text>
-          <Text className="text-xs mt-0.5 capitalize" style={{ color: colors.muted }}>
+          <Text style={{ fontSize: 13, fontWeight: '600' }} style={{ color: colors.primary }}>You are part of this venture</Text>
+          <Text style={{ fontSize: 11, marginTop: 2, textTransform: 'capitalize' }} style={{ color: colors.muted }}>
             {myRole?.replace('_', ' ')} · {myPrivilege}
           </Text>
         </View>
@@ -457,10 +463,10 @@ function RequestsTab({ ventureId, isOwner, canManage = false, onApprove, onPledg
 
   if (allRequests.length === 0) {
     return (
-      <View className="flex-1 items-center justify-center gap-2 p-8">
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 32 }}>
         <IconSymbol name="person.2.fill" size={40} color={colors.border} />
-        <Text className="text-base font-semibold" style={{ color: colors.foreground }}>No pending requests</Text>
-        <Text className="text-sm text-center" style={{ color: colors.muted }}>New join requests will appear here</Text>
+        <Text style={{ fontSize: 16, fontWeight: '600' }} style={{ color: colors.foreground }}>No pending requests</Text>
+        <Text style={{ fontSize: 13, textAlign: 'center' }} style={{ color: colors.muted }}>New join requests will appear here</Text>
       </View>
     );
   }
@@ -602,27 +608,27 @@ function TasksTab({ ventureId, canCreate = false, canComplete = false, canAssign
   };
 
   return (
-    <View className="flex-1">
-      <View className="flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: colors.border }}>
-        <Text className="text-base font-bold" style={{ color: colors.foreground }}>Active Tasks</Text>
+    <View style={{ flex: 1 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 }} style={{ borderColor: colors.border }}>
+        <Text style={{ fontSize: 16, fontWeight: '700' }} style={{ color: colors.foreground }}>Active Tasks</Text>
         {canCreate && (
           <Pressable
             onPress={() => setShowCreateModal(true)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
-            <View className="flex-row items-center gap-1 rounded-full px-3 py-1.5" style={{ backgroundColor: colors.primary }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 }} style={{ backgroundColor: colors.primary }}>
               <IconSymbol name="plus" size={14} color="white" />
-              <Text className="text-xs font-semibold" style={{ color: 'white' }}>Create Task</Text>
+              <Text style={{ fontSize: 11, fontWeight: '600' }} style={{ color: 'white' }}>Create Task</Text>
             </View>
           </Pressable>
         )}
       </View>
 
       {tasks.length === 0 ? (
-        <View className="flex-1 items-center justify-center gap-2 p-8">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 32 }}>
           <IconSymbol name="checkmark.circle.fill" size={40} color={colors.border} />
-          <Text className="text-base font-semibold" style={{ color: colors.foreground }}>No tasks yet</Text>
-          <Text className="text-sm text-center" style={{ color: colors.muted }}>Create tasks to organize your cleanup effort</Text>
+          <Text style={{ fontSize: 16, fontWeight: '600' }} style={{ color: colors.foreground }}>No tasks yet</Text>
+          <Text style={{ fontSize: 13, textAlign: 'center' }} style={{ color: colors.muted }}>Create tasks to organize your cleanup effort</Text>
         </View>
       ) : (
         <FlatList
@@ -1637,7 +1643,7 @@ export default function VentureDetailScreen() {
   return (
     <ScreenContainer containerClassName="bg-background" edges={["top", "left", "right"]}>
       {/* Header */}
-      <View className="flex-row items-center px-4 py-3 gap-3 border-b" style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12, borderBottomWidth: 1 }} style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
         <Pressable
           onPress={() => router.back()}
           style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
@@ -1645,13 +1651,13 @@ export default function VentureDetailScreen() {
           <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text className="text-base font-bold" style={{ color: colors.foreground }} numberOfLines={1}>{venture.name}</Text>
-          <View className="flex-row items-center gap-1 mt-0.5">
+          <Text style={{ fontSize: 16, fontWeight: '700' }} style={{ color: colors.foreground }} numberOfLines={1}>{venture.name}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
             <IconSymbol name="location.fill" size={10} color={colors.muted} />
-            <Text className="text-xs" style={{ color: colors.muted }} numberOfLines={1}>{venture.location}</Text>
+            <Text style={{ fontSize: 11 }} style={{ color: colors.muted }} numberOfLines={1}>{venture.location}</Text>
           </View>
         </View>
-        <View className="flex-row gap-1">
+        <View style={{ flexDirection: 'row', gap: 4 }}>
           <BadgeChip label={venture.isFree ? "Free" : "Paid"} variant={venture.isFree ? "free" : "paid"} />
           <BadgeChip
             label={venture.status.charAt(0).toUpperCase() + venture.status.slice(1)}
@@ -1661,7 +1667,7 @@ export default function VentureDetailScreen() {
       </View>
 
       {/* Tab bar */}
-      <View className="flex-row border-b" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
+      <View style={{ flexDirection: 'row', borderBottomWidth: 1 }} style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4 }}>
           {tabs.map(tab => (
             <Pressable

@@ -276,7 +276,7 @@ export default function VenturesScreen() {
       </View>
 
       {/* Tab switcher */}
-      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 12, backgroundColor: colors.surface, borderRadius: 14, padding: 4, borderWidth: 1, borderColor: colors.border }}>
+      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 16, backgroundColor: colors.surface, borderRadius: 16, padding: 5, borderWidth: 1, borderColor: colors.border, gap: 4 }}>
         {([
           { key: 'mine' as MainTab, label: 'My Ventures' },
           { key: 'discover' as MainTab, label: 'Discover' },
@@ -287,12 +287,15 @@ export default function VenturesScreen() {
             style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.8 : 1 }]}
           >
             <View style={[
-              { borderRadius: 10, paddingVertical: 9, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
-              activeTab === tab.key ? { backgroundColor: colors.primary } : {},
+              { borderRadius: 12, paddingVertical: 11, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
+              activeTab === tab.key
+                ? { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 }
+                : {},
             ]}>
               <Text style={{
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: '700',
+                letterSpacing: 0.1,
                 color: activeTab === tab.key ? 'white' : colors.muted,
               }}>
                 {tab.label}
