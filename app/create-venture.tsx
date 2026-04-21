@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
   summaryRow: { flexDirection: 'row', gap: 8 },
   summaryKey: { fontSize: 12, width: 72 },
   summaryVal: { fontSize: 12, fontWeight: '500', flex: 1 },
-  navRow: { flexDirection: 'row', gap: 12, marginTop: 24 },
+  navRow: { flexDirection: 'row', gap: 12, marginTop: 24, width: '100%' },
   backBtn: { borderRadius: 16, paddingVertical: 16, alignItems: 'center', borderWidth: 1 },
   backBtnText: { fontWeight: '600', fontSize: 15 },
   nextBtn: { borderRadius: 16, paddingVertical: 16, alignItems: 'center' },

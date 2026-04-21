@@ -242,17 +242,17 @@ export default function OAuthCallback() {
         {status === "processing" && (
           <>
             <ActivityIndicator size="large" />
-            <Text style={{ marginTop: 16, fontSize: 16, lineHeight: 24, textAlign: 'center' }} style={{ color: colors.foreground }}>
+            <Text style={{ marginTop: 16, fontSize: 16, lineHeight: 24, textAlign: 'center', color: colors.foreground }}>
               Completing authentication...
             </Text>
           </>
         )}
         {status === "success" && (
           <>
-            <Text style={{ fontSize: 16, lineHeight: 24, textAlign: 'center' }} style={{ color: colors.foreground }}>
+            <Text style={{ fontSize: 16, lineHeight: 24, textAlign: 'center', color: colors.foreground }}>
               Authentication successful!
             </Text>
-            <Text style={{ fontSize: 16, lineHeight: 24, textAlign: 'center' }} style={{ color: colors.foreground }}>
+            <Text style={{ fontSize: 16, lineHeight: 24, textAlign: 'center', color: colors.foreground }}>
               Redirecting...
             </Text>
           </>
@@ -262,7 +262,7 @@ export default function OAuthCallback() {
             <Text style={{ marginBottom: 8, fontSize: 20, fontWeight: '700', lineHeight: 28, color: colors.error }}>
               Authentication failed
             </Text>
-            <Text style={{ fontSize: 16, lineHeight: 24, textAlign: 'center' }} style={{ color: colors.foreground }}>
+            <Text style={{ fontSize: 16, lineHeight: 24, textAlign: 'center', color: colors.foreground }}>
               {errorMessage}
             </Text>
           </>

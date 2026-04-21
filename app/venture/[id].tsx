@@ -346,8 +346,8 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
           onPress={onJoinPress}
           style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
         >
-          <View style={{ borderRadius: 16, paddingVertical: 16, alignItems: 'center' }} style={{ backgroundColor: colors.primary }}>
-            <Text style={{ fontSize: 15, fontWeight: '700' }} style={{ color: 'white' }}>Request to Join</Text>
+          <View style={{ borderRadius: 16, paddingVertical: 16, alignItems: 'center', backgroundColor: colors.primary }}>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: 'white' }}>Request to Join</Text>
           </View>
         </Pressable>
       )}
@@ -363,14 +363,14 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
       {/* Finished venture — cannot join */}
       {!myRole && venture.status === 'finished' && (
         <View style={{ backgroundColor: colors.border + '66', borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
-          <Text style={{ fontSize: 13, fontWeight: '600' }} style={{ color: colors.muted }}>This venture has finished</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted }}>This venture has finished</Text>
         </View>
       )}
 
       {myRole && (
         <View style={{ borderRadius: 16, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.primary + '4D', backgroundColor: colors.primaryLight }}>
-          <Text style={{ fontSize: 13, fontWeight: '600' }} style={{ color: colors.primary }}>You are part of this venture</Text>
-          <Text style={{ fontSize: 11, marginTop: 2, textTransform: 'capitalize' }} style={{ color: colors.muted }}>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>You are part of this venture</Text>
+          <Text style={{ fontSize: 11, marginTop: 2, textTransform: 'capitalize', color: colors.muted }}>
             {myRole?.replace('_', ' ')} · {myPrivilege}
           </Text>
         </View>
@@ -465,8 +465,8 @@ function RequestsTab({ ventureId, isOwner, canManage = false, onApprove, onPledg
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 32 }}>
         <IconSymbol name="person.2.fill" size={40} color={colors.border} />
-        <Text style={{ fontSize: 16, fontWeight: '600' }} style={{ color: colors.foreground }}>No pending requests</Text>
-        <Text style={{ fontSize: 13, textAlign: 'center' }} style={{ color: colors.muted }}>New join requests will appear here</Text>
+        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>No pending requests</Text>
+        <Text style={{ fontSize: 13, textAlign: 'center', color: colors.muted }}>New join requests will appear here</Text>
       </View>
     );
   }
@@ -609,16 +609,16 @@ function TasksTab({ ventureId, canCreate = false, canComplete = false, canAssign
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 }} style={{ borderColor: colors.border }}>
-        <Text style={{ fontSize: 16, fontWeight: '700' }} style={{ color: colors.foreground }}>Active Tasks</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderColor: colors.border }}>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: colors.foreground }}>Active Tasks</Text>
         {canCreate && (
           <Pressable
             onPress={() => setShowCreateModal(true)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 }} style={{ backgroundColor: colors.primary }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.primary }}>
               <IconSymbol name="plus" size={14} color="white" />
-              <Text style={{ fontSize: 11, fontWeight: '600' }} style={{ color: 'white' }}>Create Task</Text>
+              <Text style={{ fontSize: 11, fontWeight: '600', color: 'white' }}>Create Task</Text>
             </View>
           </Pressable>
         )}
@@ -627,8 +627,8 @@ function TasksTab({ ventureId, canCreate = false, canComplete = false, canAssign
       {tasks.length === 0 ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 32 }}>
           <IconSymbol name="checkmark.circle.fill" size={40} color={colors.border} />
-          <Text style={{ fontSize: 16, fontWeight: '600' }} style={{ color: colors.foreground }}>No tasks yet</Text>
-          <Text style={{ fontSize: 13, textAlign: 'center' }} style={{ color: colors.muted }}>Create tasks to organize your cleanup effort</Text>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>No tasks yet</Text>
+          <Text style={{ fontSize: 13, textAlign: 'center', color: colors.muted }}>Create tasks to organize your cleanup effort</Text>
         </View>
       ) : (
         <FlatList
@@ -1643,21 +1643,25 @@ export default function VentureDetailScreen() {
   return (
     <ScreenContainer containerClassName="bg-background" edges={["top", "left", "right"]}>
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12, borderBottomWidth: 1 }} style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
-        <Pressable
-          onPress={() => router.back()}
-          style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-        >
-          <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700' }} style={{ color: colors.foreground }} numberOfLines={1}>{venture.name}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
-            <IconSymbol name="location.fill" size={10} color={colors.muted} />
-            <Text style={{ fontSize: 11 }} style={{ color: colors.muted }} numberOfLines={1}>{venture.location}</Text>
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10, borderBottomWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }}>
+        {/* Back + title row */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+          >
+            <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
+          </Pressable>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 17, fontWeight: '700', color: colors.foreground }} numberOfLines={1}>{venture.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+              <IconSymbol name="location.fill" size={10} color={colors.muted} />
+              <Text style={{ fontSize: 12, color: colors.muted }} numberOfLines={1}>{venture.location}</Text>
+            </View>
           </View>
         </View>
-        <View style={{ flexDirection: 'row', gap: 4 }}>
+        {/* Status badges row — below title */}
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, marginLeft: 36 }}>
           <BadgeChip label={venture.isFree ? "Free" : "Paid"} variant={venture.isFree ? "free" : "paid"} />
           <BadgeChip
             label={venture.status.charAt(0).toUpperCase() + venture.status.slice(1)}
@@ -1667,7 +1671,7 @@ export default function VentureDetailScreen() {
       </View>
 
       {/* Tab bar */}
-      <View style={{ flexDirection: 'row', borderBottomWidth: 1 }} style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
+      <View style={{ flexDirection: 'row', borderBottomWidth: 1, backgroundColor: colors.surface, borderColor: colors.border }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4 }}>
           {tabs.map(tab => (
             <Pressable

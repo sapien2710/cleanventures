@@ -153,8 +153,8 @@ export default function CartScreen() {
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, flex: 1 }]}
           >
             <View style={{
-              paddingVertical: 13, alignItems: 'center',
-              borderBottomWidth: 2.5,
+              paddingVertical: 16, alignItems: 'center',
+              borderBottomWidth: 3,
               borderBottomColor: activeTab === tab ? colors.primary : 'transparent',
             }}>
               <Text style={{
