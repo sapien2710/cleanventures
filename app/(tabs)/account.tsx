@@ -68,7 +68,6 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
         onPress={step === 'processing' ? undefined : handleClose}
       >
         <Pressable onPress={() => {}} style={{ backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: 40 }}>
-          {/* Handle */}
           <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginTop: 12, marginBottom: 20 }} />
 
           {step === 'success' ? (
@@ -80,10 +79,7 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
               <Text style={{ fontSize: 15, color: colors.muted, textAlign: 'center' }}>
                 ₹{numericAmount.toLocaleString()} has been added to your personal wallet.
               </Text>
-              <Pressable
-                onPress={handleClose}
-                style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1, width: '100%' }]}
-              >
+              <Pressable onPress={handleClose} style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1, width: '100%' }]}>
                 <View style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
                   <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Done</Text>
                 </View>
@@ -99,28 +95,19 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
             </View>
           ) : step === 'method' ? (
             <View style={{ paddingHorizontal: 20, gap: 18 }}>
-              {/* Back + title */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Pressable onPress={() => setStep('amount')} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
                   <IconSymbol name="chevron.left" size={22} color={colors.foreground} />
                 </Pressable>
                 <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground }}>Choose Payment Method</Text>
               </View>
-
-              {/* Amount pill */}
               <View style={{ backgroundColor: colors.primaryLight, borderRadius: 14, padding: 14, alignItems: 'center' }}>
                 <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }}>You are adding</Text>
                 <Text style={{ fontSize: 28, fontWeight: '800', color: colors.primary }}>₹{numericAmount.toLocaleString()}</Text>
               </View>
-
-              {/* Payment methods */}
               <View style={{ gap: 10 }}>
                 {PAYMENT_METHODS.map(method => (
-                  <Pressable
-                    key={method.id}
-                    onPress={() => setSelectedMethod(method.id)}
-                    style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-                  >
+                  <Pressable key={method.id} onPress={() => setSelectedMethod(method.id)} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
                     <View style={[
                       { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 16, borderWidth: 1.5 },
                       selectedMethod === method.id
@@ -134,18 +121,13 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
                         <Text style={{ fontSize: 14, fontWeight: '600', color: selectedMethod === method.id ? colors.primary : colors.foreground }}>{method.label}</Text>
                         <Text style={{ fontSize: 12, color: colors.muted }}>{method.sublabel}</Text>
                       </View>
-                      <View style={[
-                        { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-                        { borderColor: selectedMethod === method.id ? colors.primary : colors.border },
-                      ]}>
+                      <View style={[{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' }, { borderColor: selectedMethod === method.id ? colors.primary : colors.border }]}>
                         {selectedMethod === method.id && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary }} />}
                       </View>
                     </View>
                   </Pressable>
                 ))}
               </View>
-
-              {/* Pay button */}
               <Pressable onPress={handlePay} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
                 <View style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
                   <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Pay ₹{numericAmount.toLocaleString()}</Text>
@@ -153,11 +135,8 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
               </Pressable>
             </View>
           ) : (
-            // Amount selection step
             <View style={{ paddingHorizontal: 20, gap: 18 }}>
               <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground }}>Top Up Wallet</Text>
-
-              {/* Custom amount input */}
               <View style={{ gap: 8 }}>
                 <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted }}>Enter Amount</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: colors.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: colors.background, gap: 6 }}>
@@ -173,17 +152,11 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
                   />
                 </View>
               </View>
-
-              {/* Preset chips */}
               <View style={{ gap: 8 }}>
                 <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted }}>Quick Select</Text>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   {TOPUP_PRESETS.map(preset => (
-                    <Pressable
-                      key={preset}
-                      onPress={() => handlePreset(preset)}
-                      style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, flex: 1 }]}
-                    >
+                    <Pressable key={preset} onPress={() => handlePreset(preset)} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, flex: 1 }]}>
                       <View style={[
                         { paddingVertical: 10, borderRadius: 12, alignItems: 'center', borderWidth: 1.5 },
                         selectedPreset === preset
@@ -198,13 +171,7 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
                   ))}
                 </View>
               </View>
-
-              {/* Proceed button */}
-              <Pressable
-                onPress={handleProceed}
-                disabled={numericAmount < 10}
-                style={({ pressed }) => [{ opacity: (pressed || numericAmount < 10) ? 0.5 : 1 }]}
-              >
+              <Pressable onPress={handleProceed} disabled={numericAmount < 10} style={({ pressed }) => [{ opacity: (pressed || numericAmount < 10) ? 0.5 : 1 }]}>
                 <View style={{ backgroundColor: numericAmount >= 10 ? colors.primary : colors.border, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
                   <Text style={{ color: numericAmount >= 10 ? 'white' : colors.muted, fontWeight: '700', fontSize: 15 }}>
                     {numericAmount >= 10 ? `Proceed with ₹${numericAmount.toLocaleString()}` : 'Enter an amount'}
@@ -234,20 +201,14 @@ interface MenuItemProps {
 function MenuItem({ icon, label, subtitle, onPress, showChevron = true, iconColor, iconBg, rightBadge }: MenuItemProps) {
   const colors = useColors();
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-    >
-      <View className="flex-row items-center px-4 py-3.5 gap-3">
-        <View
-          className="w-9 h-9 rounded-xl items-center justify-center"
-          style={{ backgroundColor: iconBg || colors.primaryLight }}
-        >
+    <Pressable onPress={onPress} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 }}>
+        <View style={{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: iconBg || colors.primaryLight }}>
           <IconSymbol name={icon} size={18} color={iconColor || colors.primary} />
         </View>
-        <View className="flex-1">
-          <Text className="text-base text-foreground font-medium">{label}</Text>
-          {subtitle && <Text className="text-xs text-muted mt-0.5">{subtitle}</Text>}
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 15, color: colors.foreground, fontWeight: '500' }}>{label}</Text>
+          {subtitle && <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{subtitle}</Text>}
         </View>
         {rightBadge && (
           <View style={{ backgroundColor: colors.primary + '20', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>
@@ -265,7 +226,7 @@ export default function AccountScreen() {
   const colors = useColors();
   const { user: authUser, login, logout } = useAuth();
   const { ventures, getMemberForUser } = useVentures();
-  const { getBalance, getTransactions, topup: walletTopup } = useWallet();
+  const { getBalance, getTransactions } = useWallet();
   const balance = authUser ? getBalance(authUser.username) : 0;
   const transactions = authUser ? getTransactions(authUser.username) : [];
   const [showTopUp, setShowTopUp] = useState(false);
@@ -274,18 +235,10 @@ export default function AccountScreen() {
   const [switchPassword, setSwitchPassword] = useState('');
   const [switchError, setSwitchError] = useState('');
 
-  // Use auth user info if available, fall back to MOCK_USER
   const user = authUser
-    ? {
-        ...MOCK_USER,
-        name: authUser.displayName,
-        handle: `@${authUser.username}`,
-        avatar: authUser.avatar,
-        city: authUser.city,
-      }
+    ? { ...MOCK_USER, name: authUser.displayName, handle: `@${authUser.username}`, avatar: authUser.avatar, city: authUser.city }
     : MOCK_USER;
 
-  // Derive my ventures from members store
   const myVentures = authUser
     ? ventures.filter(v => getMemberForUser(v.id, authUser.username) !== null)
     : ventures.filter(v => v.myRole !== undefined);
@@ -307,55 +260,51 @@ export default function AccountScreen() {
     <ScreenContainer containerClassName="bg-background">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
         {/* Header */}
-        <View className="px-4 pt-4 pb-2">
-          <Text className="text-2xl font-bold text-foreground">Account</Text>
+        <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
+          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.foreground }}>Account</Text>
         </View>
 
         {/* Profile card */}
-        <View className="mx-4 bg-surface rounded-2xl p-4 border border-border">
-          <View className="flex-row items-center gap-4">
+        <View style={{ marginHorizontal: 16, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
             <Image
               source={{ uri: user.avatar }}
-              className="w-20 h-20 rounded-full"
-              style={{ borderWidth: 3, borderColor: colors.primary }}
+              style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: colors.primary }}
             />
-            <View className="flex-1">
-              <Text className="text-xl font-bold text-foreground">{user.name}</Text>
-              <Text className="text-sm text-muted">{user.handle}</Text>
-              <Text className="text-xs text-muted mt-1">{user.city}</Text>
-              <Text className="text-xs text-muted">Member since {user.joinedDate}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>{user.name}</Text>
+              <Text style={{ fontSize: 14, color: colors.muted, marginTop: 2 }}>{user.handle}</Text>
+              <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{user.city}</Text>
+              <Text style={{ fontSize: 12, color: colors.muted }}>Member since {user.joinedDate}</Text>
             </View>
           </View>
-          <Text className="text-sm text-muted mt-3 leading-relaxed">{user.bio}</Text>
+          <Text style={{ fontSize: 14, color: colors.muted, marginTop: 12, lineHeight: 20 }}>{user.bio}</Text>
         </View>
 
         {/* Stats row */}
-        <View className="flex-row mx-4 mt-4 gap-3">
+        <View style={{ flexDirection: 'row', marginHorizontal: 16, marginTop: 16, gap: 12 }}>
           {[
             { label: 'Ventures\nCompleted', value: completedVentures.length || user.venturesCompleted, icon: 'trophy.fill' as const, color: colors.accent },
             { label: 'Kg Trash\nCollected', value: user.kgCollected, icon: 'trash.fill' as const, color: colors.primary },
             { label: 'Badges\nEarned', value: user.badgesEarned, icon: 'star.fill' as const, color: '#8B5CF6' },
           ].map(stat => (
-            <View key={stat.label} className="flex-1 bg-surface rounded-xl p-3 border border-border items-center gap-1">
+            <View key={stat.label} style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center', gap: 4 }}>
               <IconSymbol name={stat.icon} size={20} color={stat.color} />
-              <Text className="text-xl font-bold text-foreground">{stat.value}</Text>
-              <Text className="text-xs text-muted text-center" numberOfLines={2}>{stat.label}</Text>
+              <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>{stat.value}</Text>
+              <Text style={{ fontSize: 11, color: colors.muted, textAlign: 'center' }} numberOfLines={2}>{stat.label}</Text>
             </View>
           ))}
         </View>
 
         {/* Wallet card */}
-        <View className="mx-4 mt-4 bg-surface rounded-2xl border border-border overflow-hidden">
+        <View style={{ marginHorizontal: 16, marginTop: 16, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
           <View style={{ backgroundColor: colors.primary, padding: 16, gap: 4 }}>
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center gap-2">
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <IconSymbol name="wallet.pass.fill" size={18} color="white" />
                 <Text style={{ fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.85)' }}>Personal Wallet</Text>
               </View>
-              <Pressable
-                onPress={() => setShowTopUp(true)}
-                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-              >
+              <Pressable onPress={() => setShowTopUp(true)} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
                 <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <IconSymbol name="plus" size={13} color="white" />
                   <Text style={{ fontSize: 13, fontWeight: '700', color: 'white' }}>Top Up</Text>
@@ -366,15 +315,14 @@ export default function AccountScreen() {
             <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>Available balance</Text>
           </View>
 
-          {/* Recent transactions */}
           {transactions.length > 0 && (
             <View>
-              <View className="px-4 py-2 border-b border-border">
-                <Text className="text-xs font-semibold text-muted uppercase tracking-wide">Recent Transactions</Text>
+              <View style={{ paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Recent Transactions</Text>
               </View>
               {transactions.slice(0, 3).map((tx, index) => (
                 <View key={tx.id}>
-                  <View className="flex-row items-center px-4 py-3 gap-3">
+                  <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
                     <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: tx.type === 'topup' ? colors.success + '20' : colors.error + '15', alignItems: 'center', justifyContent: 'center' }}>
                       <IconSymbol
                         name={tx.type === 'topup' ? 'arrow.down.circle.fill' : 'arrow.up.circle.fill'}
@@ -382,15 +330,15 @@ export default function AccountScreen() {
                         color={tx.type === 'topup' ? colors.success : colors.error}
                       />
                     </View>
-                    <View className="flex-1">
-                      <Text className="text-sm font-medium text-foreground">{tx.label}</Text>
-                      <Text className="text-xs text-muted">{new Date(tx.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '500', color: colors.foreground }}>{tx.label}</Text>
+                      <Text style={{ fontSize: 12, color: colors.muted }}>{new Date(tx.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</Text>
                     </View>
                     <Text style={{ fontSize: 14, fontWeight: '700', color: tx.type === 'topup' ? colors.success : colors.error }}>
                       {tx.type === 'topup' ? '+' : '−'}₹{tx.amount.toLocaleString()}
                     </Text>
                   </View>
-                  {index < Math.min(transactions.length, 3) - 1 && <View className="h-px bg-border mx-4" />}
+                  {index < Math.min(transactions.length, 3) - 1 && <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />}
                 </View>
               ))}
             </View>
@@ -398,18 +346,15 @@ export default function AccountScreen() {
         </View>
 
         {/* Badges */}
-        <View className="mx-4 mt-4">
-          <Text className="text-base font-bold text-foreground mb-3">My Badges</Text>
+        <View style={{ marginHorizontal: 16, marginTop: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.foreground, marginBottom: 12 }}>My Badges</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
             {user.badges.map(badge => (
-              <View key={badge.id} className="items-center gap-1.5">
-                <View
-                  className="w-14 h-14 rounded-2xl items-center justify-center"
-                  style={{ backgroundColor: badge.color + '20' }}
-                >
+              <View key={badge.id} style={{ alignItems: 'center', gap: 6 }}>
+                <View style={{ width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: badge.color + '20' }}>
                   <Text style={{ fontSize: 26 }}>{badge.icon}</Text>
                 </View>
-                <Text className="text-xs text-muted text-center" style={{ maxWidth: 56 }} numberOfLines={2}>
+                <Text style={{ fontSize: 11, color: colors.muted, textAlign: 'center', maxWidth: 56 }} numberOfLines={2}>
                   {badge.name}
                 </Text>
               </View>
@@ -418,76 +363,39 @@ export default function AccountScreen() {
         </View>
 
         {/* Menu sections */}
-        <View className="mx-4 mt-5 bg-surface rounded-2xl border border-border overflow-hidden">
-          <View className="px-4 py-2 border-b border-border">
-            <Text className="text-xs font-semibold text-muted uppercase tracking-wide">Profile</Text>
+        <View style={{ marginHorizontal: 16, marginTop: 20, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Profile</Text>
           </View>
           <MenuItem icon="person.fill" label="User Profile" subtitle="Edit your public profile" onPress={() => {}} />
-          <View className="h-px bg-border mx-4" />
-          <MenuItem
-            icon="trophy.fill"
-            label="Shuddh Stats"
-            subtitle="Your impact and achievements"
-            onPress={() => {}}
-            iconColor={colors.accent}
-            iconBg={colors.accent + '20'}
-          />
+          <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
+          <MenuItem icon="trophy.fill" label="Shuddh Stats" subtitle="Your impact and achievements" onPress={() => {}} iconColor={colors.accent} iconBg={colors.accent + '20'} />
         </View>
 
-        <View className="mx-4 mt-3 bg-surface rounded-2xl border border-border overflow-hidden">
-          <View className="px-4 py-2 border-b border-border">
-            <Text className="text-xs font-semibold text-muted uppercase tracking-wide">App</Text>
+        <View style={{ marginHorizontal: 16, marginTop: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>App</Text>
           </View>
-          <MenuItem
-            icon="wallet.pass.fill"
-            label="Top Up Wallet"
-            subtitle={`Balance: ₹${balance.toLocaleString()}`}
-            onPress={() => setShowTopUp(true)}
-            iconColor="#3B82F6"
-            iconBg="#EFF6FF"
-            rightBadge="+ Add"
-          />
-          <View className="h-px bg-border mx-4" />
-          <MenuItem
-            icon="bell.fill"
-            label="Notifications"
-            subtitle="Manage your alerts"
-            onPress={() => {}}
-            iconColor={colors.warning}
-            iconBg={colors.warning + '20'}
-          />
-          <View className="h-px bg-border mx-4" />
+          <MenuItem icon="wallet.pass.fill" label="Top Up Wallet" subtitle={`Balance: ₹${balance.toLocaleString()}`} onPress={() => setShowTopUp(true)} iconColor="#3B82F6" iconBg="#EFF6FF" rightBadge="+ Add" />
+          <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
+          <MenuItem icon="bell.fill" label="Notifications" subtitle="Manage your alerts" onPress={() => {}} iconColor={colors.warning} iconBg={colors.warning + '20'} />
+          <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
           <MenuItem icon="gear" label="Settings" onPress={() => {}} iconColor={colors.muted} iconBg={colors.border} />
         </View>
 
-        <View className="mx-4 mt-3 bg-surface rounded-2xl border border-border overflow-hidden">
-          <View className="px-4 py-2 border-b border-border">
-            <Text className="text-xs font-semibold text-muted uppercase tracking-wide">Support</Text>
+        <View style={{ marginHorizontal: 16, marginTop: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Support</Text>
           </View>
           <MenuItem icon="questionmark.circle" label="Help & Legal" onPress={() => {}} iconColor={colors.muted} iconBg={colors.border} />
-          <View className="h-px bg-border mx-4" />
+          <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
           <MenuItem icon="doc.text.fill" label="About CleanVentures" onPress={() => {}} iconColor={colors.muted} iconBg={colors.border} />
         </View>
 
-        <View className="mx-4 mt-3 bg-surface rounded-2xl border border-border overflow-hidden">
-          <MenuItem
-            icon="person.2.fill"
-            label="Switch User"
-            subtitle={authUser ? `Signed in as ${authUser.username}` : 'Switch demo account'}
-            onPress={() => setShowSwitchUser(true)}
-            showChevron={false}
-            iconColor="#6366F1"
-            iconBg="#EEF2FF"
-          />
-          <View className="h-px bg-border mx-4" />
-          <MenuItem
-            icon="arrow.left"
-            label="Sign Out"
-            onPress={() => logout()}
-            showChevron={false}
-            iconColor={colors.error}
-            iconBg={colors.error + '20'}
-          />
+        <View style={{ marginHorizontal: 16, marginTop: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+          <MenuItem icon="person.2.fill" label="Switch User" subtitle={authUser ? `Signed in as ${authUser.username}` : 'Switch demo account'} onPress={() => setShowSwitchUser(true)} showChevron={false} iconColor="#6366F1" iconBg="#EEF2FF" />
+          <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
+          <MenuItem icon="arrow.left" label="Sign Out" onPress={() => logout()} showChevron={false} iconColor={colors.error} iconBg={colors.error + '20'} />
         </View>
       </ScrollView>
 
@@ -495,23 +403,14 @@ export default function AccountScreen() {
 
       {/* Switch User Modal */}
       <Modal visible={showSwitchUser} transparent animationType="slide" onRequestClose={() => setShowSwitchUser(false)}>
-        <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
-          onPress={() => setShowSwitchUser(false)}
-        >
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => setShowSwitchUser(false)}>
           <Pressable onPress={() => {}} style={{ backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 40 }}>
             <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 20 }} />
             <Text style={{ fontSize: 18, fontWeight: '800', color: colors.foreground, marginBottom: 4 }}>Switch User</Text>
             <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 16 }}>All demo accounts use password: 1234</Text>
-
-            {/* Quick-select buttons */}
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
               {(['abhijeet', 'priya', 'rahul'] as const).map(u => (
-                <Pressable
-                  key={u}
-                  onPress={() => { setSwitchUsername(u); setSwitchPassword('1234'); }}
-                  style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.7 : 1 }]}
-                >
+                <Pressable key={u} onPress={() => { setSwitchUsername(u); setSwitchPassword('1234'); }} style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.7 : 1 }]}>
                   <View style={[
                     { borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5 },
                     switchUsername === u
@@ -523,41 +422,17 @@ export default function AccountScreen() {
                 </Pressable>
               ))}
             </View>
-
             <View style={{ gap: 12 }}>
               <View style={{ backgroundColor: colors.background, borderRadius: 12, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14, paddingVertical: 12 }}>
                 <Text style={{ fontSize: 11, color: colors.muted, fontWeight: '600', marginBottom: 4 }}>USERNAME</Text>
-                <TextInput
-                  value={switchUsername}
-                  onChangeText={setSwitchUsername}
-                  placeholder="e.g. priya"
-                  placeholderTextColor={colors.muted}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{ fontSize: 15, color: colors.foreground }}
-                  returnKeyType="next"
-                />
+                <TextInput value={switchUsername} onChangeText={setSwitchUsername} placeholder="e.g. priya" placeholderTextColor={colors.muted} autoCapitalize="none" autoCorrect={false} style={{ fontSize: 15, color: colors.foreground }} returnKeyType="next" />
               </View>
               <View style={{ backgroundColor: colors.background, borderRadius: 12, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14, paddingVertical: 12 }}>
                 <Text style={{ fontSize: 11, color: colors.muted, fontWeight: '600', marginBottom: 4 }}>PASSWORD</Text>
-                <TextInput
-                  value={switchPassword}
-                  onChangeText={setSwitchPassword}
-                  placeholder="Enter password"
-                  placeholderTextColor={colors.muted}
-                  secureTextEntry
-                  style={{ fontSize: 15, color: colors.foreground }}
-                  returnKeyType="done"
-                  onSubmitEditing={handleSwitchUser}
-                />
+                <TextInput value={switchPassword} onChangeText={setSwitchPassword} placeholder="Enter password" placeholderTextColor={colors.muted} secureTextEntry style={{ fontSize: 15, color: colors.foreground }} returnKeyType="done" onSubmitEditing={handleSwitchUser} />
               </View>
-              {switchError ? (
-                <Text style={{ fontSize: 13, color: colors.error, textAlign: 'center' }}>{switchError}</Text>
-              ) : null}
-              <Pressable
-                onPress={handleSwitchUser}
-                style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
-              >
+              {switchError ? <Text style={{ fontSize: 13, color: colors.error, textAlign: 'center' }}>{switchError}</Text> : null}
+              <Pressable onPress={handleSwitchUser} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
                 <View style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}>
                   <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Switch Account</Text>
                 </View>

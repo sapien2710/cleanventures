@@ -1,6 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
-import { cn } from "@/lib/utils";
+import { useColors } from "@/hooks/use-colors";
 
 interface BadgeChipProps {
   label: string;
@@ -11,39 +11,42 @@ interface BadgeChipProps {
 }
 
 export function BadgeChip({ label, variant = "custom", customColor, customBg, size = "sm" }: BadgeChipProps) {
+  const colors = useColors();
+
   const variantStyles: Record<string, { bg: string; text: string }> = {
-    free: { bg: "bg-success/15", text: "text-success" },
-    paid: { bg: "bg-warning/15", text: "text-warning" },
-    proposed: { bg: "bg-primary/15", text: "text-primary" },
-    ongoing: { bg: "bg-accent/15", text: "text-accent" },
-    finished: { bg: "bg-muted/15", text: "text-muted" },
-    volunteer: { bg: "bg-success/15", text: "text-success" },
-    contributing: { bg: "bg-accent/15", text: "text-accent" },
-    sponsor: { bg: "bg-warning/15", text: "text-warning" },
-    coowner: { bg: "bg-primary/15", text: "text-primary" },
-    buyer: { bg: "bg-blue-500/15", text: "text-blue-600" },
-    viewer: { bg: "bg-muted/15", text: "text-muted" },
-    custom: { bg: "bg-muted/10", text: "text-muted" },
+    free:         { bg: colors.success + '26', text: colors.success },
+    paid:         { bg: colors.warning + '26', text: colors.warning },
+    proposed:     { bg: colors.primary + '26', text: colors.primary },
+    ongoing:      { bg: colors.accent  + '26', text: colors.accent  },
+    finished:     { bg: colors.muted   + '26', text: colors.muted   },
+    volunteer:    { bg: colors.success + '26', text: colors.success },
+    contributing: { bg: colors.accent  + '26', text: colors.accent  },
+    sponsor:      { bg: colors.warning + '26', text: colors.warning },
+    coowner:      { bg: colors.primary + '26', text: colors.primary },
+    buyer:        { bg: '#3B82F626',            text: '#3B82F6'      },
+    viewer:       { bg: colors.muted   + '26', text: colors.muted   },
+    custom:       { bg: colors.muted   + '1A', text: colors.muted   },
   };
 
-  const styles = variantStyles[variant] || variantStyles.custom;
+  const s = variantStyles[variant] || variantStyles.custom;
+  const paddingVertical = size === "sm" ? 2 : 4;
+  const fontSize = size === "sm" ? 11 : 13;
 
   return (
     <View
-      className={cn(
-        "rounded-full px-2",
-        size === "sm" ? "py-0.5" : "py-1",
-        styles.bg
-      )}
-      style={customBg ? { backgroundColor: customBg } : undefined}
+      style={{
+        borderRadius: 20,
+        paddingHorizontal: 8,
+        paddingVertical,
+        backgroundColor: customBg || s.bg,
+      }}
     >
       <Text
-        className={cn(
-          "font-semibold",
-          size === "sm" ? "text-xs" : "text-sm",
-          styles.text
-        )}
-        style={customColor ? { color: customColor } : undefined}
+        style={{
+          fontSize,
+          fontWeight: '600',
+          color: customColor || s.text,
+        }}
       >
         {label}
       </Text>

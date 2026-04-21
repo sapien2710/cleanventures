@@ -45,15 +45,15 @@ function MyVenturesTab() {
   return (
     <View style={{ flex: 1 }}>
       {/* Search */}
-      <View className="mx-4 mb-3">
-        <View className="bg-surface rounded-xl flex-row items-center px-3 py-2.5 border border-border">
+      <View style={{ marginHorizontal: 16, marginBottom: 12 }}>
+        <View style={{ backgroundColor: colors.surface, borderRadius: 12, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: colors.border }}>
           <IconSymbol name="magnifyingglass" size={16} color={colors.muted} />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder="Search your ventures..."
             placeholderTextColor={colors.muted}
-            className="ml-2 flex-1 text-sm text-foreground"
+            style={{ marginLeft: 8, flex: 1, fontSize: 14, color: colors.foreground }}
             returnKeyType="done"
           />
           {search.length > 0 && (
@@ -65,15 +65,15 @@ function MyVenturesTab() {
       </View>
 
       {/* Filter chips */}
-      <View className="flex-row gap-2 px-4 mb-3">
+      <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 12 }}>
         {filters.map(f => (
           <Pressable
             key={f.key}
             onPress={() => setFilter(f.key)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
-            <View className={`rounded-full px-3 py-1.5 border ${filter === f.key ? 'bg-primary border-primary' : 'bg-surface border-border'}`}>
-              <Text className={`text-xs font-semibold ${filter === f.key ? 'text-white' : 'text-muted'}`}>
+            <View style={{ borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, backgroundColor: filter === f.key ? colors.primary : colors.surface, borderColor: filter === f.key ? colors.primary : colors.border }}>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: filter === f.key ? 'white' : colors.muted }}>
                 {f.label}
               </Text>
             </View>
@@ -83,20 +83,20 @@ function MyVenturesTab() {
 
       {/* Ventures list */}
       {filtered.length === 0 ? (
-        <View className="flex-1 items-center justify-center gap-3 px-8">
-          <View className="w-16 h-16 bg-primaryLight rounded-full items-center justify-center">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 32 }}>
+          <View style={{ width: 64, height: 64, backgroundColor: colors.primaryLight, borderRadius: 32, alignItems: 'center', justifyContent: 'center' }}>
             <IconSymbol name="leaf.fill" size={32} color={colors.primary} />
           </View>
-          <Text className="text-base font-semibold text-foreground text-center">No ventures found</Text>
-          <Text className="text-sm text-muted text-center">
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground, textAlign: 'center' }}>No ventures found</Text>
+          <Text style={{ fontSize: 14, color: colors.muted, textAlign: 'center' }}>
             {search ? `No results for "${search}"` : "You haven't joined any ventures yet. Start or join one!"}
           </Text>
           <Pressable
             onPress={() => router.push('/create-venture' as any)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
-            <View className="bg-primary rounded-full px-5 py-2.5 mt-2">
-              <Text className="text-white font-semibold">Start a Venture</Text>
+            <View style={{ backgroundColor: colors.primary, borderRadius: 20, paddingHorizontal: 20, paddingVertical: 10, marginTop: 8 }}>
+              <Text style={{ color: 'white', fontWeight: '600' }}>Start a Venture</Text>
             </View>
           </Pressable>
         </View>
@@ -134,8 +134,6 @@ function DiscoverTab() {
     return getVentureTxs(ventureId).reduce((sum, tx) => sum + tx.amount, 0);
   }, [getVentureTxs]);
 
-  // Ventures the user is NOT a member of and can join (proposed or ongoing)
-  // Use getMemberForUser to check actual member store (not stale myRole field)
   const joinableVentures = ventures.filter(v => {
     const isMember = authUser ? getMemberForUser(v.id, authUser.username) !== null : false;
     return !isMember && (v.status === 'proposed' || v.status === 'ongoing');
@@ -157,15 +155,15 @@ function DiscoverTab() {
   return (
     <View style={{ flex: 1 }}>
       {/* Search */}
-      <View className="mx-4 mb-3">
-        <View className="bg-surface rounded-xl flex-row items-center px-3 py-2.5 border border-border">
+      <View style={{ marginHorizontal: 16, marginBottom: 12 }}>
+        <View style={{ backgroundColor: colors.surface, borderRadius: 12, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: colors.border }}>
           <IconSymbol name="magnifyingglass" size={16} color={colors.muted} />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder="Search ventures to join..."
             placeholderTextColor={colors.muted}
-            className="ml-2 flex-1 text-sm text-foreground"
+            style={{ marginLeft: 8, flex: 1, fontSize: 14, color: colors.foreground }}
             returnKeyType="done"
           />
           {search.length > 0 && (
@@ -177,15 +175,15 @@ function DiscoverTab() {
       </View>
 
       {/* Filter chips */}
-      <View className="flex-row gap-2 px-4 mb-3">
+      <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 12 }}>
         {filters.map(f => (
           <Pressable
             key={f.key}
             onPress={() => setFilter(f.key)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
-            <View className={`rounded-full px-3 py-1.5 border ${filter === f.key ? 'bg-primary border-primary' : 'bg-surface border-border'}`}>
-              <Text className={`text-xs font-semibold ${filter === f.key ? 'text-white' : 'text-muted'}`}>
+            <View style={{ borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, backgroundColor: filter === f.key ? colors.primary : colors.surface, borderColor: filter === f.key ? colors.primary : colors.border }}>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: filter === f.key ? 'white' : colors.muted }}>
                 {f.label}
               </Text>
             </View>
@@ -194,12 +192,12 @@ function DiscoverTab() {
       </View>
 
       {filtered.length === 0 ? (
-        <View className="flex-1 items-center justify-center gap-3 px-8">
-          <View className="w-16 h-16 bg-primaryLight rounded-full items-center justify-center">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 32 }}>
+          <View style={{ width: 64, height: 64, backgroundColor: colors.primaryLight, borderRadius: 32, alignItems: 'center', justifyContent: 'center' }}>
             <IconSymbol name="magnifyingglass" size={32} color={colors.primary} />
           </View>
-          <Text className="text-base font-semibold text-foreground text-center">No ventures found</Text>
-          <Text className="text-sm text-muted text-center">Try adjusting your search or filter.</Text>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground, textAlign: 'center' }}>No ventures found</Text>
+          <Text style={{ fontSize: 14, color: colors.muted, textAlign: 'center' }}>Try adjusting your search or filter.</Text>
         </View>
       ) : (
         <FlatList
@@ -208,7 +206,6 @@ function DiscoverTab() {
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 12 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => {
-            // Scope pending check to current user only
             const isPending = hasRequestedJoin(item.id, authUser?.username);
             return (
               <View>
@@ -257,7 +254,6 @@ export default function VenturesScreen() {
   const { ventures, hasRequestedJoin, getMemberForUser } = useVentures();
   const { user: authUser } = useAuth();
 
-  // Count pending requests for badge on Discover tab — scoped to current user
   const pendingCount = ventures.filter(v => {
     const isMember = authUser ? getMemberForUser(v.id, authUser.username) !== null : false;
     return !isMember && hasRequestedJoin(v.id, authUser?.username);
@@ -266,15 +262,15 @@ export default function VenturesScreen() {
   return (
     <ScreenContainer containerClassName="bg-background">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 pt-4 pb-3">
-        <Text className="text-2xl font-bold text-foreground">Ventures</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 }}>
+        <Text style={{ fontSize: 24, fontWeight: '800', color: colors.foreground }}>Ventures</Text>
         <Pressable
           onPress={() => router.push('/create-venture' as any)}
           style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
         >
-          <View className="flex-row items-center gap-1 bg-primary rounded-full px-3 py-2">
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.primary, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8 }}>
             <IconSymbol name="plus" size={16} color="white" />
-            <Text className="text-white text-sm font-semibold">New Venture</Text>
+            <Text style={{ color: 'white', fontSize: 14, fontWeight: '600' }}>New Venture</Text>
           </View>
         </Pressable>
       </View>

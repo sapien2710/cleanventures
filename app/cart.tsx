@@ -139,31 +139,31 @@ export default function CartScreen() {
   return (
     <ScreenContainer containerClassName="bg-background" edges={["top", "left", "right"]}>
       {/* Header */}
-      <View className="flex-row items-center px-4 py-3 gap-3 border-b border-border bg-surface">
+      <View className="flex-row items-center px-4 py-3 gap-3 border-b" style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
         <Pressable
           onPress={() => router.back()}
           style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
         >
           <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
         </Pressable>
-        <Text className="text-lg font-bold text-foreground flex-1">Cart</Text>
+        <Text className="text-lg font-bold flex-1" style={{ color: colors.foreground }}>Cart</Text>
         {pendingCount > 0 && (
-          <View className="bg-primary rounded-full px-2.5 py-0.5">
-            <Text className="text-white text-xs font-bold">{pendingCount} pending</Text>
+          <View className="rounded-full px-2.5 py-0.5" style={{ backgroundColor: colors.primary }}>
+            <Text className="text-xs font-bold" style={{ color: 'white' }}>{pendingCount} pending</Text>
           </View>
         )}
       </View>
 
       {/* Tabs */}
-      <View className="flex-row bg-surface border-b border-border">
+      <View className="flex-row border-b" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
         {(['checkout', 'history'] as CartTab[]).map(tab => (
           <Pressable
             key={tab}
             onPress={() => setActiveTab(tab)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, flex: 1 }]}
           >
-            <View className={`py-3 items-center border-b-2 ${activeTab === tab ? 'border-primary' : 'border-transparent'}`}>
-              <Text className={`text-sm font-semibold capitalize ${activeTab === tab ? 'text-primary' : 'text-muted'}`}>
+            <View style={{ paddingVertical: 12, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: activeTab === tab ? colors.primary : 'transparent' }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', textTransform: 'capitalize', color: activeTab === tab ? colors.primary : colors.muted }}>
                 {tab === 'checkout' ? 'Checkout' : 'Order History'}
               </Text>
             </View>
@@ -187,7 +187,7 @@ export default function CartScreen() {
 
           {/* Wallet selector */}
           <View className="gap-3">
-            <Text className="text-base font-bold text-foreground">Pay From Wallet</Text>
+            <Text className="text-base font-bold" style={{ color: colors.foreground }}>Pay From Wallet</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
               {walletOptions.map(wallet => (
                 <Pressable
@@ -220,30 +220,30 @@ export default function CartScreen() {
           {/* Items for selected wallet */}
           <View className="gap-3">
             <View className="flex-row items-center justify-between">
-              <Text className="text-base font-bold text-foreground">
+              <Text className="text-base font-bold" style={{ color: colors.foreground }}>
                 {selectedWallet?.label} Items
               </Text>
-              <Text className="text-xs text-muted">{walletItems.length} item{walletItems.length !== 1 ? 's' : ''}</Text>
+              <Text className="text-xs" style={{ color: colors.muted }}>{walletItems.length} item{walletItems.length !== 1 ? 's' : ''}</Text>
             </View>
 
             {walletItems.length === 0 ? (
-              <View className="bg-surface rounded-2xl border border-border p-8 items-center gap-3">
+              <View className="rounded-2xl border p-8 items-center gap-3" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
                 <IconSymbol name="cart.fill" size={32} color={colors.muted} />
-                <Text className="text-sm text-muted text-center">No pending items for this wallet.</Text>
-                <Text className="text-xs text-muted text-center">Add products or services from the Market tab.</Text>
+                <Text className="text-sm text-center" style={{ color: colors.muted }}>No pending items for this wallet.</Text>
+                <Text className="text-xs text-center" style={{ color: colors.muted }}>Add products or services from the Market tab.</Text>
               </View>
             ) : (
-              <View className="bg-surface rounded-2xl border border-border overflow-hidden">
+              <View className="rounded-2xl border overflow-hidden" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
                 {walletItems.map((item, index) => (
                   <View key={item.id}>
                     <View className="flex-row items-center px-4 py-3 gap-3">
                       <Image source={{ uri: item.image }} style={{ width: 44, height: 44, borderRadius: 10 }} resizeMode="cover" />
                       <View className="flex-1 gap-0.5">
-                        <Text className="text-sm font-semibold text-foreground" numberOfLines={1}>{item.name}</Text>
+                        <Text className="text-sm font-semibold" style={{ color: colors.foreground }} numberOfLines={1}>{item.name}</Text>
                         {item.itemType === 'service' && (item as any).scheduledDate && (
                           <View className="flex-row items-center gap-1">
                             <IconSymbol name="calendar" size={10} color={colors.muted} />
-                            <Text className="text-xs text-muted">{(item as any).scheduledDate}</Text>
+                            <Text className="text-xs" style={{ color: colors.muted }}>{(item as any).scheduledDate}</Text>
                           </View>
                         )}
                         {/* Quantity stepper */}
@@ -257,7 +257,7 @@ export default function CartScreen() {
                                 <Text style={{ fontSize: 14, color: item.quantity <= 1 ? colors.error : colors.foreground, lineHeight: 18 }}>{item.quantity <= 1 ? '×' : '−'}</Text>
                               </View>
                             </Pressable>
-                            <Text className="text-xs font-bold text-foreground">{item.quantity}</Text>
+                            <Text className="text-xs font-bold" style={{ color: colors.foreground }}>{item.quantity}</Text>
                             <Pressable
                               onPress={() => updateQty(item.id, item.quantity + 1)}
                               style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
@@ -270,13 +270,13 @@ export default function CartScreen() {
                         )}
                       </View>
                       <View className="items-end gap-1">
-                        <Text className="text-sm font-bold text-foreground">₹{item.price * item.quantity}</Text>
+                        <Text className="text-sm font-bold" style={{ color: colors.foreground }}>₹{item.price * item.quantity}</Text>
                         <Pressable onPress={() => removeFromCart(item.id)} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
                           <IconSymbol name="trash.fill" size={14} color={colors.error} />
                         </Pressable>
                       </View>
                     </View>
-                    {index < walletItems.length - 1 && <View className="h-px bg-border mx-4" />}
+                    {index < walletItems.length - 1 && <View className="h-px mx-4" style={{ backgroundColor: colors.border }} />}
                   </View>
                 ))}
               </View>
@@ -285,23 +285,23 @@ export default function CartScreen() {
 
           {/* Order summary */}
           {hasItems && (
-            <View className="bg-surface rounded-2xl border border-border overflow-hidden">
-              <View className="px-4 py-2.5 border-b border-border">
-                <Text className="text-sm font-bold text-foreground">Order Summary</Text>
+            <View className="rounded-2xl border overflow-hidden" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
+              <View className="px-4 py-2.5 border-b" style={{ borderColor: colors.border }}>
+                <Text className="text-sm font-bold" style={{ color: colors.foreground }}>Order Summary</Text>
               </View>
               {[
                 { label: 'Subtotal', value: `₹${subtotal}` },
                 { label: 'Delivery', value: `₹${delivery}` },
               ].map(row => (
                 <View key={row.label} className="flex-row justify-between px-4 py-2.5">
-                  <Text className="text-sm text-muted">{row.label}</Text>
-                  <Text className="text-sm text-foreground">{row.value}</Text>
+                  <Text className="text-sm" style={{ color: colors.muted }}>{row.label}</Text>
+                  <Text className="text-sm" style={{ color: colors.foreground }}>{row.value}</Text>
                 </View>
               ))}
-              <View className="h-px bg-border mx-4" />
+              <View className="h-px mx-4" style={{ backgroundColor: colors.border }} />
               <View className="flex-row justify-between px-4 py-3">
-                <Text className="text-base font-bold text-foreground">Total</Text>
-                <Text className="text-base font-bold text-primary">₹{total}</Text>
+                <Text className="text-base font-bold" style={{ color: colors.foreground }}>Total</Text>
+                <Text className="text-base font-bold" style={{ color: colors.primary }}>₹{total}</Text>
               </View>
             </View>
           )}
@@ -310,7 +310,7 @@ export default function CartScreen() {
           {hasItems && !hasEnoughFunds && (
             <View className="bg-error/10 rounded-xl p-3 flex-row gap-2 items-center">
               <IconSymbol name="exclamationmark.triangle.fill" size={16} color={colors.error} />
-              <Text className="text-xs text-error flex-1">Insufficient funds. Top up your wallet from the Account screen.</Text>
+              <Text className="text-xs flex-1" style={{ color: colors.error }}>Insufficient funds. Top up your wallet from the Account screen.</Text>
             </View>
           )}
 
@@ -330,28 +330,28 @@ export default function CartScreen() {
           {/* Purchased items section */}
           {purchasedItems.length > 0 && (
             <View className="gap-3">
-              <Text className="text-base font-bold text-foreground">Purchased Items</Text>
-              <View className="bg-surface rounded-2xl border border-border overflow-hidden">
+              <Text className="text-base font-bold" style={{ color: colors.foreground }}>Purchased Items</Text>
+              <View className="rounded-2xl border overflow-hidden" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
                 {purchasedItems.map((item, index) => (
                   <View key={item.id}>
                     <View className="flex-row items-center px-4 py-3 gap-3">
                       <Image source={{ uri: item.image }} style={{ width: 40, height: 40, borderRadius: 8, opacity: 0.7 }} resizeMode="cover" />
                       <View className="flex-1">
-                        <Text className="text-sm text-muted" numberOfLines={1}>{item.name}</Text>
-                        {item.ventureName && <Text className="text-xs text-muted">{item.ventureName}</Text>}
+                        <Text className="text-sm" style={{ color: colors.muted }} numberOfLines={1}>{item.name}</Text>
+                        {item.ventureName && <Text className="text-xs" style={{ color: colors.muted }}>{item.ventureName}</Text>}
                       </View>
                       <View className="bg-success/15 rounded-full px-2 py-0.5">
-                        <Text className="text-xs font-semibold text-success">Purchased</Text>
+                        <Text className="text-xs font-semibold" style={{ color: colors.success }}>Purchased</Text>
                       </View>
                     </View>
-                    {index < purchasedItems.length - 1 && <View className="h-px bg-border mx-4" />}
+                    {index < purchasedItems.length - 1 && <View className="h-px mx-4" style={{ backgroundColor: colors.border }} />}
                   </View>
                 ))}
               </View>
             </View>
           )}
 
-          <Text className="text-xs text-muted text-center">
+          <Text className="text-xs text-center" style={{ color: colors.muted }}>
             By placing this order, you agree to community cleanup rules.
           </Text>
         </ScrollView>
@@ -362,19 +362,19 @@ export default function CartScreen() {
           contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <View className="bg-surface rounded-2xl p-4 border border-border gap-2">
+            <View className="rounded-2xl p-4 border gap-2" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
               <View className="flex-row items-center justify-between">
-                <Text className="text-sm font-bold text-foreground">{item.date}</Text>
+                <Text className="text-sm font-bold" style={{ color: colors.foreground }}>{item.date}</Text>
                 <View className={`rounded-full px-2 py-0.5 ${item.status === 'Delivered' || item.status === 'Completed' ? 'bg-success/15' : 'bg-warning/15'}`}>
                   <Text className={`text-xs font-semibold ${item.status === 'Delivered' || item.status === 'Completed' ? 'text-success' : 'text-warning'}`}>
                     {item.status}
                   </Text>
                 </View>
               </View>
-              <Text className="text-sm text-muted">{item.items}</Text>
+              <Text className="text-sm" style={{ color: colors.muted }}>{item.items}</Text>
               <View className="flex-row items-center justify-between">
-                <Text className="text-xs text-muted">{item.wallet}</Text>
-                <Text className="text-base font-bold text-primary">₹{item.total}</Text>
+                <Text className="text-xs" style={{ color: colors.muted }}>{item.wallet}</Text>
+                <Text className="text-base font-bold" style={{ color: colors.primary }}>₹{item.total}</Text>
               </View>
             </View>
           )}

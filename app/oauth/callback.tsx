@@ -6,8 +6,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useColors } from "@/hooks/use-colors";
 
 export default function OAuthCallback() {
+  const colors = useColors();
   const router = useRouter();
   const params = useLocalSearchParams<{
     code?: string;
@@ -240,17 +242,17 @@ export default function OAuthCallback() {
         {status === "processing" && (
           <>
             <ActivityIndicator size="large" />
-            <Text className="mt-4 text-base leading-6 text-center text-foreground">
+            <Text className="mt-4 text-base leading-6 text-center" style={{ color: colors.foreground }}>
               Completing authentication...
             </Text>
           </>
         )}
         {status === "success" && (
           <>
-            <Text className="text-base leading-6 text-center text-foreground">
+            <Text className="text-base leading-6 text-center" style={{ color: colors.foreground }}>
               Authentication successful!
             </Text>
-            <Text className="text-base leading-6 text-center text-foreground">
+            <Text className="text-base leading-6 text-center" style={{ color: colors.foreground }}>
               Redirecting...
             </Text>
           </>
@@ -260,7 +262,7 @@ export default function OAuthCallback() {
             <Text className="mb-2 text-xl font-bold leading-7 text-error">
               Authentication failed
             </Text>
-            <Text className="text-base leading-6 text-center text-foreground">
+            <Text className="text-base leading-6 text-center" style={{ color: colors.foreground }}>
               {errorMessage}
             </Text>
           </>

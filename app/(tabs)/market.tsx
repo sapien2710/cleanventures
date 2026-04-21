@@ -18,12 +18,12 @@ import { can } from "@/lib/permissions";
 function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: () => void }) {
   const colors = useColors();
   return (
-    <View className="bg-surface rounded-2xl overflow-hidden border border-border" style={{ width: '48%' }}>
+    <View className="rounded-2xl overflow-hidden border" style={{ backgroundColor: colors.surface, borderColor: colors.border }} style={{ width: '48%' }}>
       <View className="relative">
         <Image source={{ uri: product.image }} className="w-full h-28" resizeMode="cover" />
         {!product.inStock && (
           <View className="absolute inset-0 bg-black/40 items-center justify-center">
-            <Text className="text-white text-xs font-bold">Out of Stock</Text>
+            <Text className="text-xs font-bold" style={{ color: 'white' }}>Out of Stock</Text>
           </View>
         )}
         {product.canRent && (
@@ -33,12 +33,12 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
         )}
       </View>
       <View className="p-2.5 gap-1.5">
-        <Text className="text-sm font-semibold text-foreground" numberOfLines={2}>{product.name}</Text>
+        <Text className="text-sm font-semibold" style={{ color: colors.foreground }} numberOfLines={2}>{product.name}</Text>
         <View className="flex-row items-center justify-between">
           <View>
-            <Text className="text-base font-bold text-primary">₹{product.price}</Text>
+            <Text className="text-base font-bold" style={{ color: colors.primary }}>₹{product.price}</Text>
             {product.canRent && (
-              <Text className="text-xs text-muted">Rent: ₹{product.rentPrice}/day</Text>
+              <Text className="text-xs" style={{ color: colors.muted }}>Rent: ₹{product.rentPrice}/day</Text>
             )}
           </View>
           <Pressable
@@ -60,25 +60,25 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
 function ServiceCard({ service, onAddToCart }: { service: Service; onAddToCart: () => void }) {
   const colors = useColors();
   return (
-    <View className="bg-surface rounded-2xl overflow-hidden border border-border flex-row">
+    <View className="rounded-2xl overflow-hidden border flex-row" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
       <Image source={{ uri: service.image }} className="w-20 h-20" resizeMode="cover" />
       <View className="flex-1 p-3 justify-between">
         <View>
-          <Text className="text-sm font-semibold text-foreground" numberOfLines={1}>{service.name}</Text>
-          <Text className="text-xs text-muted mt-0.5" numberOfLines={2}>{service.description}</Text>
+          <Text className="text-sm font-semibold" style={{ color: colors.foreground }} numberOfLines={1}>{service.name}</Text>
+          <Text className="text-xs mt-0.5" style={{ color: colors.muted }} numberOfLines={2}>{service.description}</Text>
         </View>
         <View className="flex-row items-center justify-between mt-1">
           <View>
-            <Text className="text-sm font-bold text-primary">₹{service.price}</Text>
-            <Text className="text-xs text-muted">{service.unit}</Text>
+            <Text className="text-sm font-bold" style={{ color: colors.primary }}>₹{service.price}</Text>
+            <Text className="text-xs" style={{ color: colors.muted }}>{service.unit}</Text>
           </View>
           <Pressable
             onPress={onAddToCart}
             disabled={!service.available}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
-            <View className={`rounded-lg px-3 py-1.5 ${service.available ? 'bg-primary' : 'bg-border'}`}>
-              <Text className={`text-xs font-semibold ${service.available ? 'text-white' : 'text-muted'}`}>
+            <View style={{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: service.available ? colors.primary : colors.border }}>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: service.available ? 'white' : colors.muted }}>
                 {service.available ? 'Book' : 'Unavailable'}
               </Text>
             </View>
@@ -404,20 +404,20 @@ export default function MarketScreen() {
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 pt-4 pb-3">
           <View>
-            <Text className="text-2xl font-bold text-foreground">Marketplace</Text>
-            <Text className="text-sm text-muted">Supplies for your cleanup</Text>
+            <Text className="text-2xl font-bold" style={{ color: colors.foreground }}>Marketplace</Text>
+            <Text className="text-sm" style={{ color: colors.muted }}>Supplies for your cleanup</Text>
           </View>
           <Pressable
             onPress={() => router.push('/cart' as any)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
             <View className="relative">
-              <View className="bg-surface rounded-full p-2.5 border border-border">
+              <View className="rounded-full p-2.5 border" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
                 <IconSymbol name="cart.fill" size={22} color={colors.primary} />
               </View>
               {pendingCount > 0 && (
-                <View className="absolute -top-1 -right-1 bg-error rounded-full w-5 h-5 items-center justify-center">
-                  <Text className="text-white text-xs font-bold">{pendingCount}</Text>
+                <View className="absolute -top-1 -right-1 rounded-full w-5 h-5 items-center justify-center" style={{ backgroundColor: colors.error }}>
+                  <Text className="text-xs font-bold" style={{ color: 'white' }}>{pendingCount}</Text>
                 </View>
               )}
             </View>
@@ -436,8 +436,8 @@ export default function MarketScreen() {
               onPress={() => setActiveCategory(cat)}
               style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
             >
-              <View className={`rounded-full px-4 py-2 border ${activeCategory === cat ? 'bg-primary border-primary' : 'bg-surface border-border'}`}>
-                <Text className={`text-sm font-semibold ${activeCategory === cat ? 'text-white' : 'text-muted'}`}>
+              <View style={{ borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, backgroundColor: activeCategory === cat ? colors.primary : colors.surface, borderColor: activeCategory === cat ? colors.primary : colors.border }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: activeCategory === cat ? 'white' : colors.muted }}>
                   {cat}
                 </Text>
               </View>
@@ -447,7 +447,7 @@ export default function MarketScreen() {
 
         {/* Products section */}
         <View className="px-4">
-          <Text className="text-lg font-bold text-foreground mb-3">Products</Text>
+          <Text className="text-lg font-bold mb-3" style={{ color: colors.foreground }}>Products</Text>
           <View className="flex-row flex-wrap gap-3">
             {filteredProducts.map(product => (
               <ProductCard
@@ -461,7 +461,7 @@ export default function MarketScreen() {
 
         {/* Services section */}
         <View className="px-4 mt-6">
-          <Text className="text-lg font-bold text-foreground mb-3">Services</Text>
+          <Text className="text-lg font-bold mb-3" style={{ color: colors.foreground }}>Services</Text>
           <View className="gap-3">
             {MOCK_SERVICES.map(service => (
               <ServiceCard

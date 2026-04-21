@@ -29,30 +29,23 @@ export function VentureBannerCard({ venture, onPress, compact = false, memberCou
       onPress={onPress}
       style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
     >
-      <View className="bg-surface rounded-2xl overflow-hidden border border-border shadow-sm">
+      <View style={{ backgroundColor: colors.surface, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: colors.border }}>
         {/* Image */}
         {!compact && (
-          <View className="relative">
+          <View style={{ position: 'relative' }}>
             <Image
               source={{ uri: venture.images[0] }}
-              className="w-full h-36"
+              style={{ width: '100%', height: 144 }}
               resizeMode="cover"
             />
-
             {/* Badges overlay — always white text on dark pill */}
             <View style={{ position: 'absolute', top: 8, left: 8, flexDirection: 'row', gap: 6 }}>
-              <View style={{
-                backgroundColor: 'rgba(0,0,0,0.68)',
-                borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4,
-              }}>
+              <View style={{ backgroundColor: 'rgba(0,0,0,0.68)', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4 }}>
                 <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '700' }}>
                   {venture.isFree ? 'Free' : `₹${venture.eac}`}
                 </Text>
               </View>
-              <View style={{
-                backgroundColor: 'rgba(0,0,0,0.68)',
-                borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4,
-              }}>
+              <View style={{ backgroundColor: 'rgba(0,0,0,0.68)', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4 }}>
                 <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '700' }}>
                   {statusLabel}
                 </Text>
@@ -61,20 +54,20 @@ export function VentureBannerCard({ venture, onPress, compact = false, memberCou
           </View>
         )}
 
-        <View className="p-3 gap-2">
+        <View style={{ padding: 12, gap: 8 }}>
           {/* Header row */}
-          <View className="flex-row items-start justify-between gap-2">
-            <View className="flex-1">
-              <Text className="text-base font-bold text-foreground" numberOfLines={1}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.foreground }} numberOfLines={1}>
                 {venture.name}
               </Text>
-              <View className="flex-row items-center gap-1 mt-0.5">
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
                 <IconSymbol name="location.fill" size={12} color={colors.muted} />
-                <Text className="text-xs text-muted" numberOfLines={1}>{venture.location}</Text>
+                <Text style={{ fontSize: 12, color: colors.muted }} numberOfLines={1}>{venture.location}</Text>
               </View>
             </View>
             {compact && (
-              <View className="flex-row gap-1">
+              <View style={{ flexDirection: 'row', gap: 4 }}>
                 <BadgeChip label={venture.isFree ? "Free" : `₹${venture.eac}`} variant={venture.isFree ? "free" : "paid"} />
                 <BadgeChip label={statusLabel} variant={statusVariant} />
               </View>
@@ -101,7 +94,7 @@ export function VentureBannerCard({ venture, onPress, compact = false, memberCou
 
           {/* Role badges (if user is part of it) */}
           {venture.myRole && (
-            <View className="flex-row gap-1 flex-wrap">
+            <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap' }}>
               <BadgeChip
                 label={venture.myRole === 'contributing_volunteer' ? 'Contributing' : venture.myRole.charAt(0).toUpperCase() + venture.myRole.slice(1)}
                 variant={venture.myRole === 'volunteer' ? 'volunteer' : venture.myRole === 'contributing_volunteer' ? 'contributing' : 'sponsor'}
@@ -116,14 +109,14 @@ export function VentureBannerCard({ venture, onPress, compact = false, memberCou
           )}
 
           {/* Tags */}
-          <View className="flex-row gap-1 flex-wrap">
+          <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap' }}>
             {venture.scope.map(s => (
-              <View key={s} className="bg-primaryLight rounded-full px-2 py-0.5">
-                <Text className="text-xs text-primary font-medium capitalize">{s}</Text>
+              <View key={s} style={{ backgroundColor: colors.primaryLight, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 }}>
+                <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '500', textTransform: 'capitalize' }}>{s}</Text>
               </View>
             ))}
-            <View className="bg-border rounded-full px-2 py-0.5">
-              <Text className="text-xs text-muted font-medium">{venture.category}</Text>
+            <View style={{ backgroundColor: colors.border, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 }}>
+              <Text style={{ fontSize: 11, color: colors.muted, fontWeight: '500' }}>{venture.category}</Text>
             </View>
           </View>
         </View>

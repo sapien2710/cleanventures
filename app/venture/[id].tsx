@@ -223,16 +223,16 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 32 }}>
       {/* Capacity */}
-      <View className="bg-surface rounded-2xl p-4 border border-border gap-3">
-        <Text className="text-sm font-semibold text-foreground">Volunteer Capacity</Text>
+      <View className="rounded-2xl p-4 border gap-3" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
+        <Text className="text-sm font-semibold" style={{ color: colors.foreground }}>Volunteer Capacity</Text>
         <HealthBar value={venture.volunteersJoined} max={venture.volunteersRequired} variant="capacity" showCount />
       </View>
 
       {/* Funding (paid only) */}
       {!venture.isFree && (
-        <View className="bg-surface rounded-2xl p-4 border border-border gap-3">
+        <View className="rounded-2xl p-4 border gap-3" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
           <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-semibold text-foreground">Project Funding</Text>
+            <Text className="text-sm font-semibold" style={{ color: colors.foreground }}>Project Funding</Text>
             <BadgeChip label={`EAC: ₹${venture.eac}`} variant="paid" />
           </View>
           <HealthBar value={balance} max={venture.budget} variant="funding" showCount />
@@ -241,24 +241,24 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
 
       {/* Description */}
       <View className="gap-2">
-        <Text className="text-base font-bold text-foreground">About this Venture</Text>
-        <Text className="text-sm text-muted leading-relaxed">{venture.description}</Text>
+        <Text className="text-base font-bold" style={{ color: colors.foreground }}>About this Venture</Text>
+        <Text className="text-sm leading-relaxed" style={{ color: colors.muted }}>{venture.description}</Text>
       </View>
 
       {/* Details */}
-      <View className="bg-surface rounded-2xl p-4 border border-border gap-3">
+      <View className="rounded-2xl p-4 border gap-3" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
         {[
           { icon: 'calendar' as const, label: 'Date', value: venture.startDate },
           { icon: 'location.fill' as const, label: 'Location', value: venture.location },
           { icon: 'person.2.fill' as const, label: 'Owner', value: `${venture.ownerName} · ⭐ ${venture.ownerStats.rating} · ${venture.ownerStats.completed} ventures` },
         ].map(item => (
           <View key={item.label} className="flex-row gap-3 items-start">
-            <View className="w-8 h-8 bg-primaryLight rounded-lg items-center justify-center mt-0.5">
+            <View className="w-8 h-8 rounded-lg items-center justify-center mt-0.5" style={{ backgroundColor: colors.primaryLight }}>
               <IconSymbol name={item.icon} size={16} color={colors.primary} />
             </View>
-            <View className="flex-1">
-              <Text className="text-xs text-muted font-medium">{item.label}</Text>
-              <Text className="text-sm text-foreground">{item.value}</Text>
+            <View style={{ flex: 1 }}>
+              <Text className="text-xs font-medium" style={{ color: colors.muted }}>{item.label}</Text>
+              <Text className="text-sm" style={{ color: colors.foreground }}>{item.value}</Text>
             </View>
           </View>
         ))}
@@ -267,8 +267,8 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
       {/* Tags */}
       <View className="flex-row flex-wrap gap-2">
         {venture.tags.map(tag => (
-          <View key={tag} className="bg-primaryLight rounded-full px-3 py-1">
-            <Text className="text-xs text-primary font-medium capitalize">{tag}</Text>
+          <View key={tag} className="rounded-full px-3 py-1" style={{ backgroundColor: colors.primaryLight }}>
+            <Text className="text-xs font-medium capitalize" style={{ color: colors.primary }}>{tag}</Text>
           </View>
         ))}
       </View>
@@ -276,8 +276,8 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
       {/* Gallery */}
       <View className="gap-2">
         <View className="flex-row items-center justify-between">
-          <Text className="text-base font-bold text-foreground">Gallery</Text>
-          <Text className="text-xs text-muted">{allImages.length} photo{allImages.length !== 1 ? 's' : ''}</Text>
+          <Text className="text-base font-bold" style={{ color: colors.foreground }}>Gallery</Text>
+          <Text className="text-xs" style={{ color: colors.muted }}>{allImages.length} photo{allImages.length !== 1 ? 's' : ''}</Text>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
           {allImages.map((img, i) => (
@@ -340,8 +340,8 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
           onPress={onJoinPress}
           style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
         >
-          <View className="bg-primary rounded-2xl py-4 items-center">
-            <Text className="text-white font-bold text-base">Request to Join</Text>
+          <View className="rounded-2xl py-4 items-center" style={{ backgroundColor: colors.primary }}>
+            <Text className="font-bold text-base" style={{ color: 'white' }}>Request to Join</Text>
           </View>
         </Pressable>
       )}
@@ -357,14 +357,14 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
       {/* Finished venture — cannot join */}
       {!myRole && venture.status === 'finished' && (
         <View className="bg-border/40 rounded-2xl py-4 items-center">
-          <Text className="text-muted font-semibold text-sm">This venture has finished</Text>
+          <Text className="font-semibold text-sm" style={{ color: colors.muted }}>This venture has finished</Text>
         </View>
       )}
 
       {myRole && (
-        <View className="bg-primaryLight rounded-2xl py-4 items-center border border-primary/30">
-          <Text className="text-primary font-semibold text-sm">You are part of this venture</Text>
-          <Text className="text-muted text-xs mt-0.5 capitalize">
+        <View className="rounded-2xl py-4 items-center border border-primary/30" style={{ backgroundColor: colors.primaryLight }}>
+          <Text className="font-semibold text-sm" style={{ color: colors.primary }}>You are part of this venture</Text>
+          <Text className="text-xs mt-0.5 capitalize" style={{ color: colors.muted }}>
             {myRole?.replace('_', ' ')} · {myPrivilege}
           </Text>
         </View>
@@ -459,8 +459,8 @@ function RequestsTab({ ventureId, isOwner, canManage = false, onApprove, onPledg
     return (
       <View className="flex-1 items-center justify-center gap-2 p-8">
         <IconSymbol name="person.2.fill" size={40} color={colors.border} />
-        <Text className="text-base font-semibold text-foreground">No pending requests</Text>
-        <Text className="text-sm text-muted text-center">New join requests will appear here</Text>
+        <Text className="text-base font-semibold" style={{ color: colors.foreground }}>No pending requests</Text>
+        <Text className="text-sm text-center" style={{ color: colors.muted }}>New join requests will appear here</Text>
       </View>
     );
   }
@@ -603,16 +603,16 @@ function TasksTab({ ventureId, canCreate = false, canComplete = false, canAssign
 
   return (
     <View className="flex-1">
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-border">
-        <Text className="text-base font-bold text-foreground">Active Tasks</Text>
+      <View className="flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: colors.border }}>
+        <Text className="text-base font-bold" style={{ color: colors.foreground }}>Active Tasks</Text>
         {canCreate && (
           <Pressable
             onPress={() => setShowCreateModal(true)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
-            <View className="flex-row items-center gap-1 bg-primary rounded-full px-3 py-1.5">
+            <View className="flex-row items-center gap-1 rounded-full px-3 py-1.5" style={{ backgroundColor: colors.primary }}>
               <IconSymbol name="plus" size={14} color="white" />
-              <Text className="text-white text-xs font-semibold">Create Task</Text>
+              <Text className="text-xs font-semibold" style={{ color: 'white' }}>Create Task</Text>
             </View>
           </Pressable>
         )}
@@ -621,8 +621,8 @@ function TasksTab({ ventureId, canCreate = false, canComplete = false, canAssign
       {tasks.length === 0 ? (
         <View className="flex-1 items-center justify-center gap-2 p-8">
           <IconSymbol name="checkmark.circle.fill" size={40} color={colors.border} />
-          <Text className="text-base font-semibold text-foreground">No tasks yet</Text>
-          <Text className="text-sm text-muted text-center">Create tasks to organize your cleanup effort</Text>
+          <Text className="text-base font-semibold" style={{ color: colors.foreground }}>No tasks yet</Text>
+          <Text className="text-sm text-center" style={{ color: colors.muted }}>Create tasks to organize your cleanup effort</Text>
         </View>
       ) : (
         <FlatList
@@ -1637,18 +1637,18 @@ export default function VentureDetailScreen() {
   return (
     <ScreenContainer containerClassName="bg-background" edges={["top", "left", "right"]}>
       {/* Header */}
-      <View className="flex-row items-center px-4 py-3 gap-3 border-b border-border bg-surface">
+      <View className="flex-row items-center px-4 py-3 gap-3 border-b" style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
         <Pressable
           onPress={() => router.back()}
           style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
         >
           <IconSymbol name="chevron.left" size={24} color={colors.foreground} />
         </Pressable>
-        <View className="flex-1">
-          <Text className="text-base font-bold text-foreground" numberOfLines={1}>{venture.name}</Text>
+        <View style={{ flex: 1 }}>
+          <Text className="text-base font-bold" style={{ color: colors.foreground }} numberOfLines={1}>{venture.name}</Text>
           <View className="flex-row items-center gap-1 mt-0.5">
             <IconSymbol name="location.fill" size={10} color={colors.muted} />
-            <Text className="text-xs text-muted" numberOfLines={1}>{venture.location}</Text>
+            <Text className="text-xs" style={{ color: colors.muted }} numberOfLines={1}>{venture.location}</Text>
           </View>
         </View>
         <View className="flex-row gap-1">
@@ -1661,7 +1661,7 @@ export default function VentureDetailScreen() {
       </View>
 
       {/* Tab bar */}
-      <View className="flex-row bg-surface border-b border-border">
+      <View className="flex-row border-b" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4 }}>
           {tabs.map(tab => (
             <Pressable
@@ -1669,8 +1669,8 @@ export default function VentureDetailScreen() {
               onPress={() => setActiveTab(tab.key)}
               style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
             >
-              <View className={`px-4 py-3 border-b-2 ${activeTab === tab.key ? 'border-primary' : 'border-transparent'}`}>
-                <Text className={`text-sm font-semibold ${activeTab === tab.key ? 'text-primary' : 'text-muted'}`}>
+              <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: activeTab === tab.key ? colors.primary : 'transparent' }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: activeTab === tab.key ? colors.primary : colors.muted }}>
                   {tab.label}
                 </Text>
               </View>
@@ -1680,7 +1680,7 @@ export default function VentureDetailScreen() {
       </View>
 
       {/* Tab content */}
-      <View className="flex-1">
+      <View style={{ flex: 1 }}>
         {activeTab === 'mission' && <MissionTab
           venture={venture}
           onJoinPress={() => setShowJoinModal(true)}
