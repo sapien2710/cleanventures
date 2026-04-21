@@ -308,7 +308,7 @@ export default function CartScreen() {
 
           {/* Insufficient funds warning */}
           {hasItems && !hasEnoughFunds && (
-            <View className="bg-error/10 rounded-xl p-3 flex-row gap-2 items-center">
+            <View style={{ backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 12, padding: 12, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               <IconSymbol name="exclamationmark.triangle.fill" size={16} color={colors.error} />
               <Text className="text-xs flex-1" style={{ color: colors.error }}>Insufficient funds. Top up your wallet from the Account screen.</Text>
             </View>
@@ -340,7 +340,7 @@ export default function CartScreen() {
                         <Text className="text-sm" style={{ color: colors.muted }} numberOfLines={1}>{item.name}</Text>
                         {item.ventureName && <Text className="text-xs" style={{ color: colors.muted }}>{item.ventureName}</Text>}
                       </View>
-                      <View className="bg-success/15 rounded-full px-2 py-0.5">
+                      <View style={{ backgroundColor: 'rgba(34,197,94,0.15)', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
                         <Text className="text-xs font-semibold" style={{ color: colors.success }}>Purchased</Text>
                       </View>
                     </View>
@@ -365,8 +365,8 @@ export default function CartScreen() {
             <View className="rounded-2xl p-4 border gap-2" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
               <View className="flex-row items-center justify-between">
                 <Text className="text-sm font-bold" style={{ color: colors.foreground }}>{item.date}</Text>
-                <View className={`rounded-full px-2 py-0.5 ${item.status === 'Delivered' || item.status === 'Completed' ? 'bg-success/15' : 'bg-warning/15'}`}>
-                  <Text className={`text-xs font-semibold ${item.status === 'Delivered' || item.status === 'Completed' ? 'text-success' : 'text-warning'}`}>
+                <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: (item.status === 'Delivered' || item.status === 'Completed') ? 'rgba(34,197,94,0.15)' : 'rgba(245,166,35,0.15)' }}>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: (item.status === 'Delivered' || item.status === 'Completed') ? colors.success : colors.warning }}>
                     {item.status}
                   </Text>
                 </View>

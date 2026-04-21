@@ -18,23 +18,23 @@ import { can } from "@/lib/permissions";
 function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: () => void }) {
   const colors = useColors();
   return (
-    <View className="rounded-2xl overflow-hidden border" style={{ backgroundColor: colors.surface, borderColor: colors.border }} style={{ width: '48%' }}>
-      <View className="relative">
-        <Image source={{ uri: product.image }} className="w-full h-28" resizeMode="cover" />
+    <View style={{ width: '48%', borderRadius: 16, overflow: 'hidden', borderWidth: 1, backgroundColor: colors.surface, borderColor: colors.border }}>
+      <View style={{ position: 'relative' }}>
+        <Image source={{ uri: product.image }} style={{ width: '100%', height: 112 }} resizeMode="cover" />
         {!product.inStock && (
-          <View className="absolute inset-0 bg-black/40 items-center justify-center">
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' }}>
             <Text className="text-xs font-bold" style={{ color: 'white' }}>Out of Stock</Text>
           </View>
         )}
         {product.canRent && (
-          <View className="absolute top-2 left-2">
+          <View style={{ position: 'absolute', top: 8, left: 8 }}>
             <BadgeChip label="Rentable" variant="custom" customColor="#3B82F6" customBg="#EFF6FF" />
           </View>
         )}
       </View>
-      <View className="p-2.5 gap-1.5">
+      <View style={{ padding: 10, gap: 6 }}>
         <Text className="text-sm font-semibold" style={{ color: colors.foreground }} numberOfLines={2}>{product.name}</Text>
-        <View className="flex-row items-center justify-between">
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>
             <Text className="text-base font-bold" style={{ color: colors.primary }}>₹{product.price}</Text>
             {product.canRent && (
@@ -46,7 +46,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
             disabled={!product.inStock}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
-            <View className={`rounded-lg p-1.5 ${product.inStock ? 'bg-primary' : 'bg-border'}`}>
+            <View style={{ borderRadius: 8, padding: 6, backgroundColor: product.inStock ? colors.primary : colors.border }}>
               <IconSymbol name="plus" size={16} color={product.inStock ? "white" : colors.muted} />
             </View>
           </Pressable>
@@ -60,14 +60,14 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
 function ServiceCard({ service, onAddToCart }: { service: Service; onAddToCart: () => void }) {
   const colors = useColors();
   return (
-    <View className="rounded-2xl overflow-hidden border flex-row" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
-      <Image source={{ uri: service.image }} className="w-20 h-20" resizeMode="cover" />
-      <View className="flex-1 p-3 justify-between">
+    <View style={{ borderRadius: 16, overflow: 'hidden', borderWidth: 1, flexDirection: 'row', backgroundColor: colors.surface, borderColor: colors.border }}>
+      <Image source={{ uri: service.image }} style={{ width: 80, height: 80 }} resizeMode="cover" />
+      <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
         <View>
           <Text className="text-sm font-semibold" style={{ color: colors.foreground }} numberOfLines={1}>{service.name}</Text>
           <Text className="text-xs mt-0.5" style={{ color: colors.muted }} numberOfLines={2}>{service.description}</Text>
         </View>
-        <View className="flex-row items-center justify-between mt-1">
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
           <View>
             <Text className="text-sm font-bold" style={{ color: colors.primary }}>₹{service.price}</Text>
             <Text className="text-xs" style={{ color: colors.muted }}>{service.unit}</Text>
@@ -411,7 +411,7 @@ export default function MarketScreen() {
             onPress={() => router.push('/cart' as any)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
-            <View className="relative">
+            <View style={{ position: 'relative' }}>
               <View className="rounded-full p-2.5 border" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
                 <IconSymbol name="cart.fill" size={22} color={colors.primary} />
               </View>

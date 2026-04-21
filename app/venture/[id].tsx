@@ -356,13 +356,13 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
 
       {/* Finished venture — cannot join */}
       {!myRole && venture.status === 'finished' && (
-        <View className="bg-border/40 rounded-2xl py-4 items-center">
+        <View style={{ backgroundColor: colors.border + '66', borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
           <Text className="font-semibold text-sm" style={{ color: colors.muted }}>This venture has finished</Text>
         </View>
       )}
 
       {myRole && (
-        <View className="rounded-2xl py-4 items-center border border-primary/30" style={{ backgroundColor: colors.primaryLight }}>
+        <View style={{ borderRadius: 16, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.primary + '4D', backgroundColor: colors.primaryLight }}>
           <Text className="font-semibold text-sm" style={{ color: colors.primary }}>You are part of this venture</Text>
           <Text className="text-xs mt-0.5 capitalize" style={{ color: colors.muted }}>
             {myRole?.replace('_', ' ')} · {myPrivilege}

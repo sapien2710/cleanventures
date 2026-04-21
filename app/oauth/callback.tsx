@@ -4,7 +4,7 @@ import * as Auth from "@/lib/_core/auth";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Text } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/use-colors";
 
@@ -237,8 +237,8 @@ export default function OAuthCallback() {
   }, [params.code, params.state, params.error, params.sessionToken, params.user, router]);
 
   return (
-    <SafeAreaView className="flex-1" edges={["top", "bottom", "left", "right"]}>
-      <ThemedView className="flex-1 items-center justify-center gap-4 p-5">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top", "bottom", "left", "right"]}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 20, backgroundColor: colors.background }}>
         {status === "processing" && (
           <>
             <ActivityIndicator size="large" />
@@ -259,7 +259,7 @@ export default function OAuthCallback() {
         )}
         {status === "error" && (
           <>
-            <Text className="mb-2 text-xl font-bold leading-7 text-error">
+            <Text style={{ marginBottom: 8, fontSize: 20, fontWeight: '700', lineHeight: 28, color: colors.error }}>
               Authentication failed
             </Text>
             <Text className="text-base leading-6 text-center" style={{ color: colors.foreground }}>
@@ -267,7 +267,7 @@ export default function OAuthCallback() {
             </Text>
           </>
         )}
-      </ThemedView>
+      </View>
     </SafeAreaView>
   );
 }
