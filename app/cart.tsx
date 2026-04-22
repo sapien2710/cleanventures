@@ -151,22 +151,25 @@ export default function CartScreen() {
           <Pressable
             key={tab}
             onPress={() => setActiveTab(tab)}
-            style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.8 : 1 }]}
-          >
-            <View style={[
-              { borderRadius: 10, paddingVertical: 11, alignItems: 'center', justifyContent: 'center' },
-              activeTab === tab
+            style={({ pressed }) => [{
+              flex: 1,
+              borderRadius: 10,
+              paddingVertical: 11,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pressed ? 0.8 : 1,
+              ...(activeTab === tab
                 ? { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 4, elevation: 4 }
-                : { backgroundColor: 'transparent' },
-            ]}>
-              <Text style={{
-                fontSize: 14, fontWeight: activeTab === tab ? '700' : '500',
-                color: activeTab === tab ? 'white' : colors.muted,
-                letterSpacing: 0.1,
-              }}>
-                {tab === 'checkout' ? 'Checkout' : 'Order History'}
-              </Text>
-            </View>
+                : { backgroundColor: 'transparent' }),
+            }]}
+          >
+            <Text style={{
+              fontSize: 14, fontWeight: activeTab === tab ? '700' : '500',
+              color: activeTab === tab ? 'white' : colors.muted,
+              letterSpacing: 0.1,
+            }}>
+              {tab === 'checkout' ? 'Checkout' : 'Order History'}
+            </Text>
           </Pressable>
         ))}
       </View>

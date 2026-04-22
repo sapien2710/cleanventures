@@ -277,18 +277,25 @@ export default function VenturesScreen() {
 
       {/* Tab switcher */}
       <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 16, backgroundColor: colors.surface, borderRadius: 14, padding: 4, borderWidth: 1, borderColor: colors.border }}>
-        {([{ key: 'mine' as MainTab, label: 'My Ventures' }, { key: 'discover' as MainTab, label: 'Discover' }] as const).map((tab, idx) => (
+        {([{ key: 'mine' as MainTab, label: 'My Ventures' }, { key: 'discover' as MainTab, label: 'Discover' }] as const).map((tab) => (
           <Pressable
             key={tab.key}
             onPress={() => setActiveTab(tab.key)}
-            style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.8 : 1 }]}
-          >
-            <View style={[
-              { borderRadius: 10, paddingVertical: 11, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
-              activeTab === tab.key
+            style={({ pressed }) => [{
+              flex: 1,
+              borderRadius: 10,
+              paddingVertical: 11,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 6,
+              opacity: pressed ? 0.8 : 1,
+              ...(activeTab === tab.key
                 ? { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 4, elevation: 4 }
-                : { backgroundColor: 'transparent' },
-            ]}>
+                : { backgroundColor: 'transparent' }),
+            }]}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <Text style={{
                 fontSize: 14,
                 fontWeight: activeTab === tab.key ? '700' : '500',
@@ -306,6 +313,7 @@ export default function VenturesScreen() {
           </Pressable>
         ))}
       </View>
+
 
       {/* Tab content */}
       {activeTab === 'mine' ? <MyVenturesTab /> : <DiscoverTab />}
