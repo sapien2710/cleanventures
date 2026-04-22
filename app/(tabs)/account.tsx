@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, Image, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -205,26 +205,32 @@ interface MenuItemProps {
   iconColor?: string;
   iconBg?: string;
   rightBadge?: string;
+  comingSoon?: boolean;
 }
 
-function MenuItem({ icon, label, subtitle, onPress, showChevron = true, iconColor, iconBg, rightBadge }: MenuItemProps) {
+function MenuItem({ icon, label, subtitle, onPress, showChevron = true, iconColor, iconBg, rightBadge, comingSoon }: MenuItemProps) {
   const colors = useColors();
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
+    <Pressable onPress={comingSoon ? undefined : onPress} style={({ pressed }) => [{ opacity: (pressed && !comingSoon) ? 0.7 : 1 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 }}>
         <View style={{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: iconBg || colors.primaryLight }}>
           <IconSymbol name={icon} size={18} color={iconColor || colors.primary} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 15, color: colors.foreground, fontWeight: '500' }}>{label}</Text>
+          <Text style={{ fontSize: 15, color: comingSoon ? colors.muted : colors.foreground, fontWeight: '500' }}>{label}</Text>
           {subtitle && <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{subtitle}</Text>}
         </View>
+        {comingSoon && (
+          <View style={{ backgroundColor: colors.warning + '25', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 }}>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.warning }}>Soon</Text>
+          </View>
+        )}
         {rightBadge && (
           <View style={{ backgroundColor: colors.primary + '20', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>
             <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>{rightBadge}</Text>
           </View>
         )}
-        {showChevron && <IconSymbol name="chevron.right" size={16} color={colors.muted} />}
+        {showChevron && !comingSoon && <IconSymbol name="chevron.right" size={16} color={colors.muted} />}
       </View>
     </Pressable>
   );
@@ -233,7 +239,7 @@ function MenuItem({ icon, label, subtitle, onPress, showChevron = true, iconColo
 // ─── Account Screen ───────────────────────────────────────────────────────────
 export default function AccountScreen() {
   const colors = useColors();
-  const { user: authUser, login, logout } = useAuth();
+  const { user: authUser, login, logout, updateProfile } = useAuth();
   const { ventures, getMemberForUser } = useVentures();
   const { getBalance, getTransactions } = useWallet();
   const balance = authUser ? getBalance(authUser.username) : 0;
@@ -243,6 +249,14 @@ export default function AccountScreen() {
   const [switchUsername, setSwitchUsername] = useState('');
   const [switchPassword, setSwitchPassword] = useState('');
   const [switchError, setSwitchError] = useState('');
+  const [showProfile, setShowProfile] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  // Profile edit fields
+  const [editDisplayName, setEditDisplayName] = useState('');
+  const [editCity, setEditCity] = useState('');
+  const [editAbout, setEditAbout] = useState('');
+  const [editPublicNamePref, setEditPublicNamePref] = useState<'username' | 'displayName'>('displayName');
+  const [profileSaving, setProfileSaving] = useState(false);
 
   const user = authUser
     ? { ...MOCK_USER, name: authUser.displayName, handle: `@${authUser.username}`, avatar: authUser.avatar, city: authUser.city }
@@ -263,6 +277,30 @@ export default function AccountScreen() {
     } else {
       setSwitchError(result.error ?? 'Invalid credentials');
     }
+  };
+
+  const handleOpenProfile = () => {
+    setEditDisplayName(authUser?.displayName ?? '');
+    setEditCity(authUser?.city ?? '');
+    setEditAbout(authUser?.about ?? '');
+    setEditPublicNamePref(authUser?.publicNamePref ?? 'displayName');
+    setShowProfile(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editDisplayName.trim()) {
+      Alert.alert('Name required', 'Please enter your display name.');
+      return;
+    }
+    setProfileSaving(true);
+    await updateProfile({
+      displayName: editDisplayName.trim(),
+      city: editCity.trim(),
+      about: editAbout.trim(),
+      publicNamePref: editPublicNamePref,
+    });
+    setProfileSaving(false);
+    setShowProfile(false);
   };
 
   return (
@@ -287,7 +325,9 @@ export default function AccountScreen() {
               <Text style={{ fontSize: 12, color: colors.muted }}>Member since {user.joinedDate}</Text>
             </View>
           </View>
-          <Text style={{ fontSize: 14, color: colors.muted, marginTop: 12, lineHeight: 20 }}>{user.bio}</Text>
+          {(authUser?.about || user.bio) ? (
+            <Text style={{ fontSize: 14, color: colors.muted, marginTop: 12, lineHeight: 20 }}>{authUser?.about || user.bio}</Text>
+          ) : null}
         </View>
 
         {/* Stats row */}
@@ -376,9 +416,9 @@ export default function AccountScreen() {
           <View style={{ paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border }}>
             <Text style={{ fontSize: 11, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Profile</Text>
           </View>
-          <MenuItem icon="person.fill" label="User Profile" subtitle="Edit your public profile" onPress={() => {}} />
+          <MenuItem icon="person.fill" label="User Profile" subtitle="Edit your public profile" onPress={handleOpenProfile} />
           <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
-          <MenuItem icon="trophy.fill" label="Shuddh Stats" subtitle="Your impact and achievements" onPress={() => {}} iconColor={colors.accent} iconBg={colors.accent + '20'} />
+          <MenuItem icon="trophy.fill" label="Shuddh Stats" subtitle="Your impact and achievements" onPress={() => {}} iconColor={colors.accent} iconBg={colors.accent + '20'} comingSoon />
         </View>
 
         <View style={{ marginHorizontal: 16, marginTop: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
@@ -387,18 +427,18 @@ export default function AccountScreen() {
           </View>
           <MenuItem icon="wallet.pass.fill" label="Top Up Wallet" subtitle={`Balance: ₹${balance.toLocaleString()}`} onPress={() => setShowTopUp(true)} iconColor="#3B82F6" iconBg="#EFF6FF" rightBadge="+ Add" />
           <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
-          <MenuItem icon="bell.fill" label="Notifications" subtitle="Manage your alerts" onPress={() => {}} iconColor={colors.warning} iconBg={colors.warning + '20'} />
+          <MenuItem icon="bell.fill" label="Notifications" subtitle="Manage your alerts" onPress={() => {}} iconColor={colors.warning} iconBg={colors.warning + '20'} comingSoon />
           <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
-          <MenuItem icon="gear" label="Settings" onPress={() => {}} iconColor={colors.muted} iconBg={colors.border} />
+          <MenuItem icon="gear" label="Settings" onPress={() => {}} iconColor={colors.muted} iconBg={colors.border} comingSoon />
         </View>
 
         <View style={{ marginHorizontal: 16, marginTop: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
           <View style={{ paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border }}>
             <Text style={{ fontSize: 11, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Support</Text>
           </View>
-          <MenuItem icon="questionmark.circle" label="Help & Legal" onPress={() => {}} iconColor={colors.muted} iconBg={colors.border} />
+          <MenuItem icon="questionmark.circle" label="Help & Legal" onPress={() => {}} iconColor={colors.muted} iconBg={colors.border} comingSoon />
           <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16 }} />
-          <MenuItem icon="doc.text.fill" label="About CleanVentures" onPress={() => {}} iconColor={colors.muted} iconBg={colors.border} />
+          <MenuItem icon="doc.text.fill" label="About CleanVentures" onPress={() => setShowAbout(true)} iconColor={colors.primary} iconBg={colors.primaryLight} />
         </View>
 
         <View style={{ marginHorizontal: 16, marginTop: 12, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
@@ -409,6 +449,155 @@ export default function AccountScreen() {
       </ScrollView>
 
       <TopUpSheet visible={showTopUp} onClose={() => setShowTopUp(false)} authUsername={authUser?.username ?? ''} />
+
+      {/* ─── User Profile Edit Modal ─── */}
+      <Modal visible={showProfile} transparent animationType="slide" onRequestClose={() => setShowProfile(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => setShowProfile(false)}>
+            <Pressable onPress={() => {}} style={{ backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: 40 }}>
+              <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginTop: 12, marginBottom: 20 }} />
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 18, paddingBottom: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground }}>Edit Profile</Text>
+                  <Pressable onPress={() => setShowProfile(false)} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
+                    <IconSymbol name="xmark.circle.fill" size={26} color={colors.muted} />
+                  </Pressable>
+                </View>
+
+                {/* Avatar placeholder */}
+                <View style={{ alignItems: 'center', gap: 8 }}>
+                  <View style={{ position: 'relative' }}>
+                    <Image source={{ uri: authUser?.avatar }} style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: colors.primary }} />
+                    <View style={{ position: 'absolute', bottom: 0, right: 0, width: 26, height: 26, borderRadius: 13, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.surface }}>
+                      <IconSymbol name="camera.fill" size={12} color="white" />
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 12, color: colors.muted }}>Profile photo (coming soon)</Text>
+                </View>
+
+                {/* Display Name */}
+                <View style={{ gap: 6 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.6 }}>Display Name</Text>
+                  <View style={{ backgroundColor: colors.background, borderRadius: 12, borderWidth: 1.5, borderColor: colors.border, paddingHorizontal: 14, paddingVertical: 12 }}>
+                    <TextInput value={editDisplayName} onChangeText={setEditDisplayName} placeholder="Your full name" placeholderTextColor={colors.muted} style={{ fontSize: 15, color: colors.foreground }} />
+                  </View>
+                </View>
+
+                {/* Username (read-only) */}
+                <View style={{ gap: 6 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.6 }}>Username</Text>
+                  <View style={{ backgroundColor: colors.border + '40', borderRadius: 12, borderWidth: 1.5, borderColor: colors.border, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ fontSize: 15, color: colors.muted, flex: 1 }}>@{authUser?.username}</Text>
+                    <View style={{ backgroundColor: colors.border, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                      <Text style={{ fontSize: 11, color: colors.muted, fontWeight: '600' }}>Fixed</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Location */}
+                <View style={{ gap: 6 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.6 }}>Location</Text>
+                  <View style={{ backgroundColor: colors.background, borderRadius: 12, borderWidth: 1.5, borderColor: colors.border, paddingHorizontal: 14, paddingVertical: 12 }}>
+                    <TextInput value={editCity} onChangeText={setEditCity} placeholder="City, State" placeholderTextColor={colors.muted} style={{ fontSize: 15, color: colors.foreground }} />
+                  </View>
+                </View>
+
+                {/* About */}
+                <View style={{ gap: 6 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.6 }}>About</Text>
+                  <View style={{ backgroundColor: colors.background, borderRadius: 12, borderWidth: 1.5, borderColor: colors.border, paddingHorizontal: 14, paddingVertical: 12 }}>
+                    <TextInput
+                      value={editAbout}
+                      onChangeText={setEditAbout}
+                      placeholder="Tell the community about yourself…"
+                      placeholderTextColor={colors.muted}
+                      multiline
+                      numberOfLines={3}
+                      style={{ fontSize: 15, color: colors.foreground, minHeight: 72, textAlignVertical: 'top' }}
+                    />
+                  </View>
+                </View>
+
+                {/* Public name preference */}
+                <View style={{ gap: 10 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.6 }}>Display Name to Public</Text>
+                  {(['displayName', 'username'] as const).map(pref => (
+                    <Pressable key={pref} onPress={() => setEditPublicNamePref(pref)} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
+                      <View style={[
+                        { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, borderWidth: 1.5 },
+                        editPublicNamePref === pref
+                          ? { borderColor: colors.primary, backgroundColor: colors.primaryLight }
+                          : { borderColor: colors.border, backgroundColor: colors.background },
+                      ]}>
+                        <View style={[{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' }, { borderColor: editPublicNamePref === pref ? colors.primary : colors.border }]}>
+                          {editPublicNamePref === pref && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary }} />}
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 14, fontWeight: '600', color: editPublicNamePref === pref ? colors.primary : colors.foreground }}>
+                            {pref === 'displayName' ? 'Full name' : 'Username'}
+                          </Text>
+                          <Text style={{ fontSize: 12, color: colors.muted }}>
+                            {pref === 'displayName' ? `Show as "${editDisplayName || authUser?.displayName}"` : `Show as "@${authUser?.username}"`}
+                          </Text>
+                        </View>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+
+                {/* Save button */}
+                <Pressable onPress={handleSaveProfile} disabled={profileSaving} style={({ pressed }) => [{ opacity: (pressed || profileSaving) ? 0.7 : 1, marginTop: 4 }]}>
+                  <View style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center' }}>
+                    <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>{profileSaving ? 'Saving…' : 'Save Profile'}</Text>
+                  </View>
+                </Pressable>
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ─── About CleanVentures Modal ─── */}
+      <Modal visible={showAbout} transparent animationType="slide" onRequestClose={() => setShowAbout(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => setShowAbout(false)}>
+          <Pressable onPress={() => {}} style={{ backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 48 }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 20 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 24 }}>🌿</Text>
+              </View>
+              <View>
+                <Text style={{ fontSize: 20, fontWeight: '800', color: colors.foreground }}>CleanVentures</Text>
+                <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }}>Community. Action. Impact.</Text>
+              </View>
+            </View>
+            <Text style={{ fontSize: 15, color: colors.foreground, lineHeight: 24, marginBottom: 16 }}>
+              CleanVentures is a community-driven platform that brings neighbours, volunteers, and local organisations together to make the world a cleaner, greener place — one neighbourhood at a time.
+            </Text>
+            <View style={{ gap: 12, marginBottom: 20 }}>
+              {[
+                { icon: '🗺️', title: 'Organise Cleanups', desc: 'Create or join local cleanup ventures with goals, tasks, and budgets.' },
+                { icon: '🛒', title: 'Source Supplies', desc: 'Order gloves, bags, tools and more — paid from shared venture wallets.' },
+                { icon: '👥', title: 'Build a Team', desc: 'Invite co-owners, buyers and volunteers to collaborate on each venture.' },
+                { icon: '📊', title: 'Track Impact', desc: 'Log trash collected, tasks completed, and celebrate milestones together.' },
+              ].map(item => (
+                <View key={item.title} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+                  <Text style={{ fontSize: 22, marginTop: 1 }}>{item.icon}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.foreground }}>{item.title}</Text>
+                    <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 20 }}>{item.desc}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+            <Pressable onPress={() => setShowAbout(false)} style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}>
+              <View style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Got it!</Text>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Switch User Modal */}
       <Modal visible={showSwitchUser} transparent animationType="slide" onRequestClose={() => setShowSwitchUser(false)}>
