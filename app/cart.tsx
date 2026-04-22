@@ -141,25 +141,28 @@ export default function CartScreen() {
         )}
       </View>
 
-      {/* Tab switcher */}
+      {/* Tab switcher - pill style */}
       <View style={{
-        flexDirection: 'row', backgroundColor: colors.surface,
-        borderBottomWidth: 1, borderColor: colors.border,
+        flexDirection: 'row', marginHorizontal: 16, marginVertical: 12,
+        backgroundColor: colors.surface, borderRadius: 14, padding: 4,
+        borderWidth: 1, borderColor: colors.border,
       }}>
         {(['checkout', 'history'] as CartTab[]).map(tab => (
           <Pressable
             key={tab}
             onPress={() => setActiveTab(tab)}
-            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, flex: 1 }]}
+            style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.8 : 1 }]}
           >
-            <View style={{
-              paddingVertical: 16, alignItems: 'center',
-              borderBottomWidth: 3,
-              borderBottomColor: activeTab === tab ? colors.primary : 'transparent',
-            }}>
+            <View style={[
+              { flex: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center', justifyContent: 'center' },
+              activeTab === tab
+                ? { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 4, elevation: 4 }
+                : { backgroundColor: 'transparent' },
+            ]}>
               <Text style={{
                 fontSize: 14, fontWeight: activeTab === tab ? '700' : '500',
-                color: activeTab === tab ? colors.primary : colors.muted,
+                color: activeTab === tab ? 'white' : colors.muted,
+                letterSpacing: 0.1,
               }}>
                 {tab === 'checkout' ? 'Checkout' : 'Order History'}
               </Text>

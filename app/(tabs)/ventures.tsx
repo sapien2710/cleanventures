@@ -284,7 +284,7 @@ export default function VenturesScreen() {
             style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.8 : 1 }]}
           >
             <View style={[
-              { borderRadius: 10, paddingVertical: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
+              { flex: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
               activeTab === tab.key
                 ? { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 4, elevation: 4 }
                 : { backgroundColor: 'transparent' },
