@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Alert, FlatList, Image, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, FlatList, Image, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { ScreenContainer } from "@/components/screen-container";
@@ -142,36 +142,23 @@ export default function CartScreen() {
       </View>
 
       {/* Tab switcher - pill style */}
-      <View style={{
-        flexDirection: 'row', marginHorizontal: 16, marginVertical: 12,
-        backgroundColor: colors.surface, borderRadius: 14, padding: 4,
-        borderWidth: 1, borderColor: colors.border,
-      }}>
-        {(['checkout', 'history'] as CartTab[]).map(tab => (
-          <Pressable
-            key={tab}
-            onPress={() => setActiveTab(tab)}
-            style={({ pressed }) => [{
-              flex: 1,
-              borderRadius: 10,
-              paddingVertical: 11,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.8 : 1,
-              ...(activeTab === tab
-                ? { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 4, elevation: 4 }
-                : { backgroundColor: 'transparent' }),
-            }]}
-          >
-            <Text style={{
-              fontSize: 14, fontWeight: activeTab === tab ? '700' : '500',
-              color: activeTab === tab ? 'white' : colors.muted,
-              letterSpacing: 0.1,
-            }}>
-              {tab === 'checkout' ? 'Checkout' : 'Order History'}
-            </Text>
-          </Pressable>
-        ))}
+      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginVertical: 12, backgroundColor: colors.surface, borderRadius: 14, padding: 4, borderWidth: 1, borderColor: colors.border }}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setActiveTab('checkout')}
+          style={[{ width: '50%', borderRadius: 10, paddingVertical: 11, alignItems: 'center', justifyContent: 'center' },
+            activeTab === 'checkout' ? { backgroundColor: colors.primary } : { backgroundColor: 'transparent' }]}
+        >
+          <Text style={{ fontSize: 14, fontWeight: activeTab === 'checkout' ? '700' : '500', color: activeTab === 'checkout' ? 'white' : colors.muted }}>Checkout</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setActiveTab('history')}
+          style={[{ width: '50%', borderRadius: 10, paddingVertical: 11, alignItems: 'center', justifyContent: 'center' },
+            activeTab === 'history' ? { backgroundColor: colors.primary } : { backgroundColor: 'transparent' }]}
+        >
+          <Text style={{ fontSize: 14, fontWeight: activeTab === 'history' ? '700' : '500', color: activeTab === 'history' ? 'white' : colors.muted }}>Order History</Text>
+        </TouchableOpacity>
       </View>
 
       {activeTab === 'checkout' ? (
