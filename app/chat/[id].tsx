@@ -251,7 +251,7 @@ export default function ChatScreen() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={insets.top}
       >
         {/* Header */}
         <View
@@ -388,80 +388,81 @@ export default function ChatScreen() {
           />
         )}
 
-        {/* Input bar */}
+      </KeyboardAvoidingView>
+
+      {/* Input bar — lives OUTSIDE KeyboardAvoidingView so it always stays visible */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "flex-end",
+          paddingHorizontal: 12,
+          paddingTop: 10,
+          paddingBottom: Math.max(insets.bottom, 8),
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          backgroundColor: colors.surface,
+        }}
+      >
+        {/* Text input */}
         <View
           style={{
-            flexDirection: "row",
-            alignItems: "flex-end",
-            paddingHorizontal: 12,
-            paddingTop: 10,
-            paddingBottom: Math.max(insets.bottom, 10) + 4,
-            borderTopWidth: 1,
-            borderTopColor: colors.border,
-            backgroundColor: colors.surface,
+            flex: 1,
+            backgroundColor: colors.background,
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: colors.border,
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            minHeight: 40,
+            marginRight: 8,
           }}
         >
-          {/* Text input */}
-          <View
+          <TextInput
+            value={messageText}
+            onChangeText={setMessageText}
+            placeholder="Type a message..."
+            placeholderTextColor={colors.muted}
             style={{
-              flex: 1,
-              backgroundColor: colors.background,
-              borderRadius: 20,
-              borderWidth: 1,
-              borderColor: colors.border,
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              minHeight: 40,
-              marginRight: 8,
+              fontSize: 14,
+              color: colors.foreground,
+              lineHeight: 20,
+              maxHeight: 100,
             }}
-          >
-            <TextInput
-              value={messageText}
-              onChangeText={setMessageText}
-              placeholder="Type a message..."
-              placeholderTextColor={colors.muted}
-              style={{
-                fontSize: 14,
-                color: colors.foreground,
-                lineHeight: 20,
-                maxHeight: 100,
-              }}
-              multiline
-              maxLength={500}
-              returnKeyType="default"
-            />
-          </View>
-
-          {/* Send button — flexShrink:0 ensures it never gets squeezed out */}
-          <Pressable
-            onPress={handleSend}
-            disabled={!messageText.trim() || sending}
-            style={({ pressed }) => ({
-              opacity: pressed ? 0.7 : 1,
-              width: 40,
-              height: 40,
-              flexShrink: 0,
-              borderRadius: 20,
-              backgroundColor:
-                messageText.trim() && !sending
-                  ? colors.primary
-                  : colors.border,
-              alignItems: "center",
-              justifyContent: "center",
-            })}
-          >
-            {sending ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <IconSymbol
-                name="paperplane.fill"
-                size={16}
-                color={messageText.trim() ? "white" : colors.muted}
-              />
-            )}
-          </Pressable>
+            multiline
+            maxLength={500}
+            returnKeyType="default"
+          />
         </View>
-      </KeyboardAvoidingView>
+
+        {/* Send button */}
+        <Pressable
+          onPress={handleSend}
+          disabled={!messageText.trim() || sending}
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.7 : 1,
+            width: 40,
+            height: 40,
+            flexShrink: 0,
+            borderRadius: 20,
+            backgroundColor:
+              messageText.trim() && !sending
+                ? colors.primary
+                : colors.border,
+            alignItems: "center",
+            justifyContent: "center",
+          })}
+        >
+          {sending ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <IconSymbol
+              name="paperplane.fill"
+              size={16}
+              color={messageText.trim() ? "white" : colors.muted}
+            />
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }
