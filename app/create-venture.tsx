@@ -504,35 +504,32 @@ export default function CreateVentureScreen() {
           </View>
         )}
 
-        {/* Navigation buttons */}
-        <View style={styles.navRow}>
-          {step > 1 && (
-            <Pressable
-              onPress={() => setStep((step - 1) as Step)}
-              style={({ pressed }) => [styles.navBtn, { opacity: pressed ? 0.7 : 1 }]}
-            >
-              <View style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <Text style={[styles.backBtnText, { color: colors.foreground }]}>Back</Text>
-              </View>
-            </Pressable>
-          )}
-          <Pressable
-            onPress={() => {
-              if (step < 4) setStep((step + 1) as Step);
-              else handleLaunch();
-            }}
-            disabled={!canProceed()}
-            style={({ pressed }) => [styles.navBtn, { opacity: (pressed || !canProceed()) ? 0.5 : 1 }]}
-          >
-            <View style={[styles.nextBtn, { backgroundColor: canProceed() ? colors.primary : colors.border }]}>
-              <Text style={[styles.nextBtnText, { color: canProceed() ? 'white' : colors.muted }]}>
-                {step === 4 ? '🚀 Launch Venture' : 'Continue'}
-              </Text>
-            </View>
-          </Pressable>
-        </View>
       </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Navigation buttons — outside ScrollView so they always fill full width */}
+      <View style={[styles.navRow, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
+        {step > 1 ? (
+          <Pressable
+            onPress={() => setStep((step - 1) as Step)}
+            style={({ pressed }) => [styles.navBtnBack, { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Text style={[styles.backBtnText, { color: colors.foreground }]}>Back</Text>
+          </Pressable>
+        ) : null}
+        <Pressable
+          onPress={() => {
+            if (step < 4) setStep((step + 1) as Step);
+            else handleLaunch();
+          }}
+          disabled={!canProceed()}
+          style={({ pressed }) => [styles.navBtnNext, { backgroundColor: canProceed() ? colors.primary : colors.border, opacity: (pressed || !canProceed()) ? 0.5 : 1 }]}
+        >
+          <Text style={[styles.nextBtnText, { color: canProceed() ? 'white' : colors.muted }]}>
+            {step === 4 ? '🚀 Launch Venture' : 'Continue'}
+          </Text>
+        </Pressable>
+      </View>
 
       {/* ── Location Picker Modal ──────────────────────────────────────── */}
       <Modal
@@ -609,11 +606,10 @@ const styles = StyleSheet.create({
   summaryRow: { flexDirection: 'row', gap: 8 },
   summaryKey: { fontSize: 12, width: 72 },
   summaryVal: { fontSize: 12, fontWeight: '500', flex: 1 },
-  navRow: { flexDirection: 'row', gap: 12, marginTop: 24, alignSelf: 'stretch' },
-  navBtn: { flex: 1, alignSelf: 'stretch' },
-  backBtn: { flex: 1, borderRadius: 16, paddingVertical: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  navRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1 },
+  navBtnBack: { flex: 1, borderRadius: 16, paddingVertical: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  navBtnNext: { flex: 2, borderRadius: 16, paddingVertical: 18, alignItems: 'center', justifyContent: 'center' },
   backBtnText: { fontWeight: '600', fontSize: 16 },
-  nextBtn: { flex: 1, borderRadius: 16, paddingVertical: 18, alignItems: 'center', justifyContent: 'center' },
   nextBtnText: { fontWeight: '700', fontSize: 16 },
   // Success screen
   successContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 },
