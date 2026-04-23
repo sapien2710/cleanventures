@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from "react";
 import {
-  Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Platform
+  Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Platform, KeyboardAvoidingView
 } from "react-native";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useRouter } from "expo-router";
@@ -183,7 +183,17 @@ export default function CreateVentureScreen() {
         ))}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+      >
 
         {/* ── Step 1: Info ──────────────────────────────────────────────── */}
         {step === 1 && (
@@ -508,7 +518,7 @@ export default function CreateVentureScreen() {
               else handleLaunch();
             }}
             disabled={!canProceed()}
-            style={({ pressed }) => [{ opacity: (pressed || !canProceed()) ? 0.5 : 1, flex: step > 1 ? 2 : 1 }]}
+            style={({ pressed }) => [{ opacity: (pressed || !canProceed()) ? 0.5 : 1, flex: 1 }]}
           >
             <View style={[styles.nextBtn, { backgroundColor: canProceed() ? colors.primary : colors.border }]}>
               <Text style={[styles.nextBtnText, { color: canProceed() ? 'white' : colors.muted }]}>
@@ -518,6 +528,7 @@ export default function CreateVentureScreen() {
           </Pressable>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* ── Location Picker Modal ──────────────────────────────────────── */}
       <Modal
@@ -595,10 +606,10 @@ const styles = StyleSheet.create({
   summaryKey: { fontSize: 12, width: 72 },
   summaryVal: { fontSize: 12, fontWeight: '500', flex: 1 },
   navRow: { flexDirection: 'row', gap: 12, marginTop: 24, width: '100%' },
-  backBtn: { borderRadius: 16, paddingVertical: 16, alignItems: 'center', borderWidth: 1 },
-  backBtnText: { fontWeight: '600', fontSize: 15 },
-  nextBtn: { borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
-  nextBtnText: { fontWeight: '700', fontSize: 15 },
+  backBtn: { borderRadius: 16, paddingVertical: 18, alignItems: 'center', borderWidth: 1, width: '100%' },
+  backBtnText: { fontWeight: '600', fontSize: 16 },
+  nextBtn: { borderRadius: 16, paddingVertical: 18, alignItems: 'center', width: '100%' },
+  nextBtnText: { fontWeight: '700', fontSize: 16 },
   // Success screen
   successContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 },
   successIcon: { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
