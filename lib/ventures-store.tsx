@@ -180,7 +180,7 @@ function adaptVenture(raw: any, myRole?: string): Venture {
     volunteersRequired: raw.max_members ?? 20,
     startDate: raw.start_date ?? "",
     endDate: raw.end_date ?? "",
-    images: raw.cover_image_url ? [raw.cover_image_url] : ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600"],
+    images: raw.cover_image_url ? [raw.cover_image_url] : [],
     tags: [],
     ownerName: raw.profiles?.full_name ?? raw.profiles?.username ?? "Organiser",
     ownerAvatar: raw.profiles?.avatar_url ?? `https://i.pravatar.cc/150?u=${raw.owner_id}`,
