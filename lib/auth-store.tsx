@@ -44,7 +44,7 @@ function mapApiUser(u: AuthResponse["user"]): AppUser {
     username: u.username,
     email: u.email,
     displayName: u.full_name || u.username,
-    avatar: u.avatar_url || `https://i.pravatar.cc/150?u=${u.username}`,
+    avatar: u.avatar_url || "",
     city: u.city || "",
     about: u.about || undefined,
     publicNamePref: (u.display_name_pref as AppUser["publicNamePref"]) || "displayName",
