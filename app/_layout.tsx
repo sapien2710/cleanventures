@@ -26,6 +26,7 @@ import { AuthProvider } from "@/lib/auth-store";
 import { NotificationsProvider } from "@/lib/notifications-store";
 import { ActivityProvider } from "@/lib/activity-store";
 import { ChatProvider } from "@/lib/chat-store";
+import { StreamChatProvider } from "@/lib/chat-provider";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
 
 // Keep the splash screen visible while we fetch resources
@@ -103,6 +104,7 @@ export default function RootLayout() {
       <VenturesProvider>
       <ActivityProvider>
       <ChatProvider>
+      <StreamChatProvider>
       <CartProvider>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
@@ -123,6 +125,7 @@ export default function RootLayout() {
         </QueryClientProvider>
       </trpc.Provider>
       </CartProvider>
+      </StreamChatProvider>
       </ChatProvider>
       </ActivityProvider>
       </VenturesProvider>

@@ -14,6 +14,7 @@ import { useVentures, type VentureMember } from "@/lib/ventures-store";
 import { MOCK_USER } from "@/lib/mock-data";
 import type { Venture } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth-store";
+import { useStreamChat } from "@/lib/chat-provider";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -35,6 +36,7 @@ export default function CreateVentureScreen() {
   const colors = useColors();
   const { addVenture } = useVentures();
   const { user: authUser } = useAuth();
+  const { createVentureChannel } = useStreamChat();
   const [step, setStep] = useState<Step>(1);
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [launched, setLaunched] = useState(false);
@@ -121,6 +123,8 @@ export default function CreateVentureScreen() {
     };
 
     addVenture(newVenture, ownerMember);
+    // Create a Stream Chat channel for this venture (fire-and-forget)
+    createVentureChannel(newVenture.id, newVenture.name).catch(() => {});
     setLaunched(true);
   };
 
