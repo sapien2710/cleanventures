@@ -48,18 +48,19 @@ const StreamChatContext = createContext<StreamChatContextValue>({
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function StreamChatProvider({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [isReady, setIsReady] = useState(false);
-  const connectedRef = useRef(false);
+  const connectedUserId = useRef<string | null>(null);
   const channelCache = useRef<Record<string, Channel>>({});
 
   useEffect(() => {
     const client = getStreamClient();
 
-    if (!isAuthenticated || !user) {
-      if (connectedRef.current) {
+    // User logged out — disconnect
+    if (!user) {
+      if (connectedUserId.current) {
         client.disconnectUser().then(() => {
-          connectedRef.current = false;
+          connectedUserId.current = null;
           setIsReady(false);
           channelCache.current = {};
         }).catch(() => {});
@@ -67,7 +68,16 @@ export function StreamChatProvider({ children }: { children: React.ReactNode }) 
       return;
     }
 
-    if (connectedRef.current) return;
+    // Already connected as this user — skip
+    if (connectedUserId.current === user.id) return;
+
+    // If connected as a different user, disconnect first
+    if (connectedUserId.current && connectedUserId.current !== user.id) {
+      client.disconnectUser().catch(() => {});
+      connectedUserId.current = null;
+      setIsReady(false);
+      channelCache.current = {};
+    }
 
     async function connectUser() {
       try {
@@ -82,36 +92,69 @@ export function StreamChatProvider({ children }: { children: React.ReactNode }) 
           res.token
         );
 
-        connectedRef.current = true;
+        connectedUserId.current = user!.id;
         setIsReady(true);
+        console.log("[StreamChat] Connected as", res.user_name);
       } catch (err) {
         console.warn("[StreamChat] Failed to connect:", err);
+        // Retry after 3 seconds
+        setTimeout(connectUser, 3000);
       }
     }
 
     connectUser();
-  }, [isAuthenticated, user?.id]);
+  }, [user?.id]);
 
   const getChannel = useCallback((ventureId: string): Channel | null => {
     return channelCache.current[ventureId] ?? null;
   }, []);
 
   const loadChannel = useCallback(async (ventureId: string, ventureName: string): Promise<Channel | null> => {
-    if (!isReady) return null;
     const client = getStreamClient();
+
+    // Wait up to 8 seconds for Stream to be ready
+    let waited = 0;
+    while (!connectedUserId.current && waited < 8000) {
+      await new Promise(r => setTimeout(r, 300));
+      waited += 300;
+    }
+
+    if (!connectedUserId.current) {
+      console.warn("[StreamChat] Not connected after waiting, cannot load channel");
+      return null;
+    }
+
     const channelId = `venture-${ventureId}`;
 
+    // Check cache first
+    if (channelCache.current[ventureId]) {
+      return channelCache.current[ventureId];
+    }
+
     try {
-      // Try to get existing channel first
       const channel = client.channel("messaging", channelId, { name: ventureName });
       await channel.watch();
       channelCache.current[ventureId] = channel;
       return channel;
-    } catch (err) {
-      console.warn("[StreamChat] Failed to load channel:", err);
-      return null;
+    } catch (err: any) {
+      // Channel doesn't exist yet — create it via backend
+      console.warn("[StreamChat] Channel not found, creating:", err?.message);
+      try {
+        await api.post("/chat/channel", {
+          venture_id: ventureId,
+          venture_name: ventureName,
+        });
+        // Now try to watch again
+        const channel = client.channel("messaging", channelId, { name: ventureName });
+        await channel.watch();
+        channelCache.current[ventureId] = channel;
+        return channel;
+      } catch (err2) {
+        console.warn("[StreamChat] Failed to create/load channel:", err2);
+        return null;
+      }
     }
-  }, [isReady]);
+  }, []);
 
   const createVentureChannel = useCallback(async (ventureId: string, ventureName: string): Promise<string | null> => {
     try {
