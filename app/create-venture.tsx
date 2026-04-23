@@ -505,7 +505,7 @@ export default function CreateVentureScreen() {
           {step > 1 && (
             <Pressable
               onPress={() => setStep((step - 1) as Step)}
-              style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, flex: 1 }]}
+              style={({ pressed }) => [styles.navBtn, { opacity: pressed ? 0.7 : 1 }]}
             >
               <View style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <Text style={[styles.backBtnText, { color: colors.foreground }]}>Back</Text>
@@ -518,7 +518,7 @@ export default function CreateVentureScreen() {
               else handleLaunch();
             }}
             disabled={!canProceed()}
-            style={({ pressed }) => [{ opacity: (pressed || !canProceed()) ? 0.5 : 1, flex: 1 }]}
+            style={({ pressed }) => [styles.navBtn, { opacity: (pressed || !canProceed()) ? 0.5 : 1 }]}
           >
             <View style={[styles.nextBtn, { backgroundColor: canProceed() ? colors.primary : colors.border }]}>
               <Text style={[styles.nextBtnText, { color: canProceed() ? 'white' : colors.muted }]}>
@@ -605,10 +605,11 @@ const styles = StyleSheet.create({
   summaryRow: { flexDirection: 'row', gap: 8 },
   summaryKey: { fontSize: 12, width: 72 },
   summaryVal: { fontSize: 12, fontWeight: '500', flex: 1 },
-  navRow: { flexDirection: 'row', gap: 12, marginTop: 24, width: '100%' },
-  backBtn: { borderRadius: 16, paddingVertical: 18, alignItems: 'center', borderWidth: 1, width: '100%' },
+  navRow: { flexDirection: 'row', gap: 12, marginTop: 24, alignSelf: 'stretch' },
+  navBtn: { flex: 1, alignSelf: 'stretch' },
+  backBtn: { flex: 1, borderRadius: 16, paddingVertical: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   backBtnText: { fontWeight: '600', fontSize: 16 },
-  nextBtn: { borderRadius: 16, paddingVertical: 18, alignItems: 'center', width: '100%' },
+  nextBtn: { flex: 1, borderRadius: 16, paddingVertical: 18, alignItems: 'center', justifyContent: 'center' },
   nextBtnText: { fontWeight: '700', fontSize: 16 },
   // Success screen
   successContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 },
