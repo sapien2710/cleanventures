@@ -354,22 +354,40 @@ export function VenturesProvider({ children }: { children: React.ReactNode }) {
       // Build a set of venture IDs the user is a member of
       const myIds = new Set(myRaw.map((r: any) => r.id));
 
-      // Build members map from my ventures (they include my_role)
+      // Build members map — fetch full member list for each of the user's ventures
       const membersMap: MembersMap = {};
 
-      // Adapt my ventures first (with role)
-      const myVentures = myRaw.map((raw: any) => {
+      // Fetch full details (including all members) for each of the user's ventures in parallel
+      const myVentureDetails = await Promise.all(
+        myRaw.map(async (raw: any) => {
+          try {
+            const detail: any = await api.get(`/ventures/${raw.id}`);
+            return { ...detail, my_role: raw.my_role };
+          } catch {
+            // Fallback to the list data if detail fetch fails
+            return raw;
+          }
+        })
+      );
+
+      // Adapt my ventures first (with role and full member list)
+      const myVentures = myVentureDetails.map((raw: any) => {
         const adapted = adaptVenture(raw, raw.my_role);
-        // For my ventures, we know the current user's member entry
-        membersMap[raw.id] = [{
-          id: user.id,
-          username: user.displayName,
-          authUsername: user.username,
-          avatar: user.avatar,
-          role: mapBackendRole(raw.my_role),
-          privilege: mapBackendPrivilege(raw.my_role),
-          isOwner: raw.my_role === "owner",
-        }];
+        // Build full member list from the detail response
+        if (raw.members && Array.isArray(raw.members) && raw.members.length > 0) {
+          membersMap[raw.id] = raw.members.map(adaptMember);
+        } else {
+          // Fallback: at minimum add the current user
+          membersMap[raw.id] = [{
+            id: user.id,
+            username: user.displayName,
+            authUsername: user.username,
+            avatar: user.avatar,
+            role: mapBackendRole(raw.my_role),
+            privilege: mapBackendPrivilege(raw.my_role),
+            isOwner: raw.my_role === "owner",
+          }];
+        }
         return adapted;
       });
 

@@ -1749,6 +1749,21 @@ export default function VentureDetailScreen() {
           canManage={canDo('MANAGE_REQUESTS')}
           onApprove={(member) => {
             addMember(venture.id, member);
+            // Persist approval to backend so membership survives app reloads/user switches
+            if (member.userId) {
+              api.post(`/ventures/${venture.id}/approve-member`, {
+                target_user_id: member.userId,
+                role: member.role ?? 'volunteer',
+              }).then(() => {
+                // Refresh ventures so the new member appears in the backend-sourced member list
+                refreshVentures();
+              }).catch((err: any) => {
+                // 409 = already a member (idempotent), ignore
+                if (!err?.message?.includes('409')) {
+                  console.warn('[Approve] Failed to persist member to backend:', err);
+                }
+              });
+            }
             // Add the approved member to the Stream channel so they can access chat
             // Pass their Supabase UUID so the backend adds THEM (not the owner)
             addMemberToChannel(venture.id, member.userId).catch(() => {});
