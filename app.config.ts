@@ -120,7 +120,6 @@ const config: ExpoConfig = {
         },
       },
     ],
-    "react-native-keyboard-controller",
   ],
   experiments: {
     typedRoutes: true,

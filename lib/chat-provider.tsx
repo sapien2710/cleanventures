@@ -35,7 +35,7 @@ type StreamChatContextValue = {
   getChannel: (ventureId: string) => Channel | null;
   loadChannel: (ventureId: string, ventureName: string) => Promise<Channel | null>;
   createVentureChannel: (ventureId: string, ventureName: string) => Promise<string | null>;
-  addMemberToChannel: (ventureId: string) => Promise<boolean>;
+  addMemberToChannel: (ventureId: string, targetUserId?: string) => Promise<boolean>;
 };
 
 const StreamChatContext = createContext<StreamChatContextValue>({
@@ -175,10 +175,11 @@ export function StreamChatProvider({ children }: { children: React.ReactNode }) 
    * Add the currently logged-in user to a venture's Stream channel.
    * Called when a join request is approved so the new member can access chat.
    */
-  const addMemberToChannel = useCallback(async (ventureId: string): Promise<boolean> => {
+  const addMemberToChannel = useCallback(async (ventureId: string, targetUserId?: string): Promise<boolean> => {
     try {
       const channelId = `venture-${ventureId}`;
-      await api.post(`/chat/channel/${channelId}/members`, {});
+      // Pass target_user_id so the owner can add the approved member (not themselves)
+      await api.post(`/chat/channel/${channelId}/members`, targetUserId ? { target_user_id: targetUserId } : {});
       // Invalidate cache so channel is re-fetched with updated membership
       delete channelCache.current[ventureId];
       return true;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 
 import { ScreenContainer } from "@/components/screen-container";
@@ -81,11 +81,9 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
               <Text style={{ fontSize: 15, color: colors.muted, textAlign: 'center' }}>
                 ₹{numericAmount.toLocaleString()} has been added to your personal wallet.
               </Text>
-              <Pressable onPress={handleClose} style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1, width: '100%' }]}>
-                <View style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
-                  <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Done</Text>
-                </View>
-              </Pressable>
+              <TouchableOpacity onPress={handleClose} activeOpacity={0.8} style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center', width: '100%' }}>
+                <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Done</Text>
+              </TouchableOpacity>
             </View>
           ) : step === 'processing' ? (
             <View style={{ paddingHorizontal: 24, paddingBottom: 8, alignItems: 'center', gap: 16 }}>
@@ -130,11 +128,9 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
                   </Pressable>
                 ))}
               </View>
-              <Pressable onPress={handlePay} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-                <View style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
-                  <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Pay ₹{numericAmount.toLocaleString()}</Text>
-                </View>
-              </Pressable>
+              <TouchableOpacity onPress={handlePay} activeOpacity={0.85} style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Pay ₹{numericAmount.toLocaleString()}</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <View style={{ paddingHorizontal: 20, gap: 20 }}>
@@ -182,13 +178,11 @@ function TopUpSheet({ visible, onClose, authUsername }: { visible: boolean; onCl
                   ))}
                 </View>
               </View>
-              <Pressable onPress={handleProceed} disabled={numericAmount < 10} style={({ pressed }) => [{ opacity: (pressed || numericAmount < 10) ? 0.5 : 1 }]}>
-                <View style={{ backgroundColor: numericAmount >= 10 ? colors.primary : colors.border, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
-                  <Text style={{ color: numericAmount >= 10 ? 'white' : colors.muted, fontWeight: '700', fontSize: 15 }}>
-                    {numericAmount >= 10 ? `Proceed with ₹${numericAmount.toLocaleString()}` : 'Enter an amount'}
-                  </Text>
-                </View>
-              </Pressable>
+              <TouchableOpacity onPress={handleProceed} disabled={numericAmount < 10} activeOpacity={0.85} style={{ backgroundColor: numericAmount >= 10 ? colors.primary : colors.border, borderRadius: 16, paddingVertical: 16, alignItems: 'center', opacity: numericAmount < 10 ? 0.5 : 1 }}>
+                <Text style={{ color: numericAmount >= 10 ? 'white' : colors.muted, fontWeight: '700', fontSize: 15 }}>
+                  {numericAmount >= 10 ? `Proceed with ₹${numericAmount.toLocaleString()}` : 'Enter an amount'}
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
         </Pressable>
@@ -585,11 +579,9 @@ export default function AccountScreen() {
                 </View>
 
                 {/* Save button */}
-                <Pressable onPress={handleSaveProfile} disabled={profileSaving} style={({ pressed }) => [{ opacity: (pressed || profileSaving) ? 0.7 : 1, marginTop: 4 }]}>
-                  <View style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center' }}>
-                    <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>{profileSaving ? 'Saving…' : 'Save Profile'}</Text>
-                  </View>
-                </Pressable>
+                <TouchableOpacity onPress={handleSaveProfile} disabled={profileSaving} activeOpacity={0.7} style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginTop: 4, opacity: profileSaving ? 0.7 : 1 }}>
+                  <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>{profileSaving ? 'Saving…' : 'Save Profile'}</Text>
+                </TouchableOpacity>
               </ScrollView>
             </Pressable>
           </Pressable>
@@ -629,11 +621,9 @@ export default function AccountScreen() {
                 </View>
               ))}
             </View>
-            <Pressable onPress={() => setShowAbout(false)} style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}>
-              <View style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}>
-                <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Got it!</Text>
-              </View>
-            </Pressable>
+            <TouchableOpacity onPress={() => setShowAbout(false)} activeOpacity={0.8} style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}>
+              <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Got it!</Text>
+            </TouchableOpacity>
           </Pressable>
         </Pressable>
       </Modal>
@@ -655,11 +645,9 @@ export default function AccountScreen() {
                 <TextInput value={switchPassword} onChangeText={setSwitchPassword} placeholder="Enter password" placeholderTextColor={colors.muted} secureTextEntry style={{ fontSize: 15, color: colors.foreground }} returnKeyType="done" onSubmitEditing={handleSwitchUser} />
               </View>
               {switchError ? <Text style={{ fontSize: 13, color: colors.error, textAlign: 'center' }}>{switchError}</Text> : null}
-              <Pressable onPress={handleSwitchUser} style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-                <View style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}>
-                  <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Switch Account</Text>
-                </View>
-              </Pressable>
+              <TouchableOpacity onPress={handleSwitchUser} activeOpacity={0.85} style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Switch Account</Text>
+              </TouchableOpacity>
             </View>
           </Pressable>
         </Pressable>

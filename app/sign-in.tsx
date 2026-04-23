@@ -233,14 +233,12 @@ export default function SignInScreen() {
               ) : null}
 
               {/* Sign In button */}
-              <Pressable onPress={handleLogin} disabled={loading} style={({ pressed }) => [{ opacity: pressed || loading ? 0.75 : 1 }]}>
-                <View style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 }}>
-                  <IconSymbol name={loading ? "arrow.clockwise" : "arrow.right.circle.fill"} size={18} color="white" />
-                  <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
-                    {loading ? "Signing in…" : "Sign In"}
-                  </Text>
-                </View>
-              </Pressable>
+              <TouchableOpacity onPress={handleLogin} disabled={loading} activeOpacity={0.75} style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8, opacity: loading ? 0.75 : 1 }}>
+                <IconSymbol name={loading ? "arrow.clockwise" : "arrow.right.circle.fill"} size={18} color="white" />
+                <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
+                  {loading ? "Signing in…" : "Sign In"}
+                </Text>
+              </TouchableOpacity>
             </>
           ) : (
             <>
@@ -327,28 +325,24 @@ export default function SignInScreen() {
               ) : null}
 
               {/* Register button */}
-              <Pressable onPress={handleRegister} disabled={loading} style={({ pressed }) => [{ opacity: pressed || loading ? 0.75 : 1 }]}>
-                <View style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 }}>
-                  <IconSymbol name={loading ? "arrow.clockwise" : "person.badge.plus"} size={18} color="white" />
-                  <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
-                    {loading ? "Creating account…" : "Create Account"}
-                  </Text>
-                </View>
-              </Pressable>
+              <TouchableOpacity onPress={handleRegister} disabled={loading} activeOpacity={0.75} style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8, opacity: loading ? 0.75 : 1 }}>
+                <IconSymbol name={loading ? "arrow.clockwise" : "person.badge.plus"} size={18} color="white" />
+                <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
+                  {loading ? "Creating account…" : "Create Account"}
+                </Text>
+              </TouchableOpacity>
             </>
           )}
         </View>
 
         {/* Google sign-in placeholder */}
-        <Pressable style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, marginTop: 16 }]} onPress={() => {}}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, borderWidth: 1.5, borderColor: colors.border, borderRadius: 16, paddingVertical: 14, backgroundColor: colors.surface }}>
-            <Text style={{ fontSize: 18 }}>G</Text>
-            <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>Continue with Google</Text>
-            <View style={{ backgroundColor: colors.warning + "20", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
-              <Text style={{ fontSize: 10, fontWeight: "700", color: colors.warning }}>Coming Soon</Text>
-            </View>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => {}} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, borderWidth: 1.5, borderColor: colors.border, borderRadius: 16, paddingVertical: 14, backgroundColor: colors.surface, marginTop: 16 }}>
+          <Text style={{ fontSize: 18 }}>G</Text>
+          <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>Continue with Google</Text>
+          <View style={{ backgroundColor: colors.warning + "20", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
+            <Text style={{ fontSize: 10, fontWeight: "700", color: colors.warning }}>Coming Soon</Text>
           </View>
-        </Pressable>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );

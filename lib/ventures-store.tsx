@@ -28,6 +28,7 @@ export type VentureMember = {
   id: string;
   username: string;
   authUsername?: string;
+  userId?: string;        // Supabase UUID (for Stream Chat membership)
   avatar: string;
   role: UserRole;
   privilege: UserPrivilege | null;
@@ -431,6 +432,11 @@ export function VenturesProvider({ children }: { children: React.ReactNode }) {
     if (patch.location !== undefined) backendPatch.location = patch.location;
     if (patch.status !== undefined) backendPatch.status = patch.status;
     if (patch.budget !== undefined) backendPatch.budget = patch.budget;
+    // Sync cover image — use first image in array as cover_image_url
+    if (patch.images !== undefined) {
+      const cover = patch.images.find(u => u.startsWith('http'));
+      if (cover) backendPatch.cover_image_url = cover;
+    }
     if (Object.keys(backendPatch).length > 0) {
       api.patch(`/ventures/${id}`, backendPatch).catch(() => {});
     }

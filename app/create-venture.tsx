@@ -144,22 +144,20 @@ export default function CreateVentureScreen() {
             <Text style={{ fontWeight: '700', color: colors.primary }}>{name}</Text> has been created and is now visible to your community. Share it and start recruiting volunteers!
           </Text>
           <View style={styles.successActions}>
-            <Pressable
+            <TouchableOpacity
               onPress={() => router.replace('/(tabs)/ventures' as any)}
-              style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
+              activeOpacity={0.85}
+              style={[styles.successBtn, { backgroundColor: colors.primary }]}
             >
-              <View style={[styles.successBtn, { backgroundColor: colors.primary }]}>
-                <Text style={styles.successBtnText}>View My Ventures</Text>
-              </View>
-            </Pressable>
-            <Pressable
+              <Text style={styles.successBtnText}>View My Ventures</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => router.replace('/(tabs)/' as any)}
-              style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
+              activeOpacity={0.85}
+              style={[styles.successBtnOutline, { borderColor: colors.border }]}
             >
-              <View style={[styles.successBtnOutline, { borderColor: colors.border }]}>
-                <Text style={[styles.successBtnOutlineText, { color: colors.foreground }]}>Back to Home</Text>
-              </View>
-            </Pressable>
+              <Text style={[styles.successBtnOutlineText, { color: colors.foreground }]}>Back to Home</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScreenContainer>

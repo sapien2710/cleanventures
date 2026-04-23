@@ -53,6 +53,7 @@ export interface JoinRequest {
   ventureId: string;
   username: string;       // Display name
   authUsername?: string;  // Auth username for financial operations
+  userId?: string;        // Supabase UUID of the requesting user (for Stream Chat)
   avatar: string;
   rating: number;
   role: UserRole;

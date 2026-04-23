@@ -365,14 +365,13 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
 
       {/* Join button — only for proposed/ongoing ventures user hasn't joined */}
       {canJoin && !alreadyRequested && (
-        <Pressable
+        <TouchableOpacity
           onPress={onJoinPress}
-          style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
+          activeOpacity={0.85}
+          style={{ borderRadius: 16, paddingVertical: 16, alignItems: 'center', backgroundColor: colors.primary }}
         >
-          <View style={{ borderRadius: 16, paddingVertical: 16, alignItems: 'center', backgroundColor: colors.primary }}>
-            <Text style={{ fontSize: 15, fontWeight: '700', color: 'white' }}>Request to Join</Text>
-          </View>
-        </Pressable>
+          <Text style={{ fontSize: 15, fontWeight: '700', color: 'white' }}>Request to Join</Text>
+        </TouchableOpacity>
       )}
 
       {/* Request already submitted */}
@@ -401,27 +400,25 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
 
       {/* Owner-only status controls */}
       {canChangeStatus && venture.status === 'proposed' && (
-        <Pressable
+        <TouchableOpacity
           onPress={() => onStatusChange('ongoing')}
-          style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
+          activeOpacity={0.85}
+          style={{ backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
         >
-          <View style={{ backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
-            <IconSymbol name="play.fill" size={16} color="white" />
-            <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Activate Venture</Text>
-          </View>
-        </Pressable>
+          <IconSymbol name="play.fill" size={16} color="white" />
+          <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Activate Venture</Text>
+        </TouchableOpacity>
       )}
 
       {canChangeStatus && venture.status === 'ongoing' && (
-        <Pressable
+        <TouchableOpacity
           onPress={() => onStatusChange('finished')}
-          style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
+          activeOpacity={0.85}
+          style={{ backgroundColor: colors.success, borderRadius: 16, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
         >
-          <View style={{ backgroundColor: colors.success, borderRadius: 16, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
-            <IconSymbol name="checkmark.circle.fill" size={16} color="white" />
-            <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Mark as Complete</Text>
-          </View>
-        </Pressable>
+          <IconSymbol name="checkmark.circle.fill" size={16} color="white" />
+          <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Mark as Complete</Text>
+        </TouchableOpacity>
       )}
 
       {/* Activity Feed */}
@@ -473,6 +470,7 @@ function RequestsTab({ ventureId, isOwner, canManage = false, onApprove, onPledg
           id: `member-${req.id}`,
           username: req.username,
           authUsername: req.authUsername,
+          userId: req.userId,  // Supabase UUID for Stream Chat
           avatar: req.avatar,
           role: req.role as import('@/lib/mock-data').UserRole,
           privilege: (req.privilege ?? null) as import('@/lib/mock-data').UserPrivilege | null,
@@ -904,7 +902,7 @@ function TasksTab({ ventureId, canCreate = false, canComplete = false, canAssign
                   />
                 </View>
 
-                <Pressable
+                <TouchableOpacity
                   onPress={() => {
                     if (!taskTitle.trim()) return;
                     const selectedMembers = members.filter(m => taskAssignees.includes(m.id));
@@ -931,12 +929,11 @@ function TasksTab({ ventureId, canCreate = false, canComplete = false, canAssign
                     setTaskAssignees([]);
                     setShowCreateModal(false);
                   }}
-                  style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
+                  activeOpacity={0.85}
+                  style={[taskStyles.submitBtn, { backgroundColor: taskTitle.trim() ? colors.primary : colors.border }]}
                 >
-                  <View style={[taskStyles.submitBtn, { backgroundColor: taskTitle.trim() ? colors.primary : colors.border }]}>
-                    <Text style={[taskStyles.submitBtnText, { color: taskTitle.trim() ? 'white' : colors.muted }]}>Create Task</Text>
-                  </View>
-                </Pressable>
+                  <Text style={[taskStyles.submitBtnText, { color: taskTitle.trim() ? 'white' : colors.muted }]}>Create Task</Text>
+                </TouchableOpacity>
               </ScrollView>
             </Pressable>
           </Pressable>
@@ -1082,14 +1079,13 @@ function WalletTab({ ventureId, venture, canContribute = false }: { ventureId: s
                   <Text style={{ fontSize: 14, color: colors.muted, textAlign: 'center', lineHeight: 20 }}>
                     Your personal wallet has been debited and the funds have been added to this venture.
                   </Text>
-                  <Pressable
+                  <TouchableOpacity
                     onPress={() => setShowContributeModal(false)}
-                    style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, width: '100%' }]}
+                    activeOpacity={0.85}
+                    style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 15, alignItems: 'center', width: '100%' }}
                   >
-                    <View style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 15, alignItems: 'center' }}>
-                      <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Done</Text>
-                    </View>
-                  </Pressable>
+                    <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Done</Text>
+                  </TouchableOpacity>
                 </View>
               ) : (
                 <View style={{ padding: 24, gap: 20 }}>
@@ -1137,19 +1133,18 @@ function WalletTab({ ventureId, venture, canContribute = false }: { ventureId: s
 
                   <Text style={{ fontSize: 12, color: colors.muted }}>Available in personal wallet: <Text style={{ fontWeight: '700', color: colors.foreground }}>₹{personalBalance}</Text></Text>
 
-                  <Pressable
+                  <TouchableOpacity
                     onPress={handleContribute}
-                    style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
-                  >
-                    <View style={[
+                    activeOpacity={0.85}
+                    style={[
                       { borderRadius: 16, paddingVertical: 15, alignItems: 'center' },
                       contributeAmount && parseInt(contributeAmount) > 0
                         ? { backgroundColor: colors.success }
                         : { backgroundColor: colors.border },
-                    ]}>
-                      <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Confirm Contribution</Text>
-                    </View>
-                  </Pressable>
+                    ]}
+                  >
+                    <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Confirm Contribution</Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </Pressable>
@@ -1500,18 +1495,18 @@ function MembersTab({ ventureId, isCoOwner, currentAuthUsername, onMemberRemoved
           </View>
 
           {/* Save button */}
-          <Pressable
+          <TouchableOpacity
             onPress={saveEdit}
-            style={({ pressed }) => [{
+            activeOpacity={0.85}
+            style={{
               backgroundColor: colors.primary,
               borderRadius: 16,
               padding: 16,
               alignItems: 'center',
-              opacity: pressed ? 0.85 : 1,
-            }]}
+            }}
           >
             <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>Save Changes</Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </Modal>
     </>
@@ -1754,8 +1749,9 @@ export default function VentureDetailScreen() {
           canManage={canDo('MANAGE_REQUESTS')}
           onApprove={(member) => {
             addMember(venture.id, member);
-            // Add the new member to the Stream channel so they can access chat
-            addMemberToChannel(venture.id).catch(() => {});
+            // Add the approved member to the Stream channel so they can access chat
+            // Pass their Supabase UUID so the backend adds THEM (not the owner)
+            addMemberToChannel(venture.id, member.userId).catch(() => {});
           }}
           onPledgeDeduct={handlePledgeDeduct}
         />}
@@ -1796,14 +1792,13 @@ export default function VentureDetailScreen() {
                   <Text style={{ fontSize: 14, color: colors.muted, textAlign: 'center', lineHeight: 20 }}>
                     Your request to join as a <Text style={{ color: colors.primary, fontWeight: '600' }}>{selectedRole.replace('_', ' ')}</Text> has been sent to the venture owner. You’ll be notified when they respond.
                   </Text>
-                  <Pressable
+                  <TouchableOpacity
                     onPress={() => { setShowJoinModal(false); setJoinSubmitted(false); }}
-                    style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, width: '100%' }]}
+                    activeOpacity={0.85}
+                    style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 15, alignItems: 'center', width: '100%' }}
                   >
-                    <View style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 15, alignItems: 'center' }}>
-                      <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Done</Text>
-                    </View>
-                  </Pressable>
+                    <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Done</Text>
+                  </TouchableOpacity>
                 </View>
               ) : (
                 /* Form state */
@@ -1930,13 +1925,14 @@ export default function VentureDetailScreen() {
                   </View>
 
                   {/* Send button */}
-                  <Pressable
+                  <TouchableOpacity
                     onPress={() => {
                       const newRequest: import('@/lib/mock-data').JoinRequest = {
                         id: `jr-${Date.now()}`,
                         ventureId: venture.id,
                         username: authUser?.username ?? authUser?.displayName ?? 'Unknown',
                         authUsername: authUser?.username,
+                        userId: authUser?.id,  // Supabase UUID for Stream Chat
                         avatar: authUser?.avatar ?? '',
                         rating: 4.5,
                         role: selectedRole as import('@/lib/mock-data').UserRole,
@@ -1951,12 +1947,11 @@ export default function VentureDetailScreen() {
                       }
                       setJoinSubmitted(true);
                     }}
-                    style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
+                    activeOpacity={0.85}
+                    style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
                   >
-                    <View style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
-                      <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Send Request</Text>
-                    </View>
-                  </Pressable>
+                    <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Send Request</Text>
+                  </TouchableOpacity>
                 </ScrollView>
               )}
             </Pressable>
@@ -2032,22 +2027,24 @@ export default function VentureDetailScreen() {
 
             {/* Actions */}
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Pressable
+              <TouchableOpacity
                 onPress={() => setShowCompletionConfirm(false)}
-                style={({ pressed }) => [{ flex: 1, backgroundColor: colors.background, borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: colors.border, opacity: pressed ? 0.7 : 1 }]}
+                activeOpacity={0.7}
+                style={{ flex: 1, backgroundColor: colors.background, borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: colors.border }}
               >
                 <Text style={{ fontSize: 15, fontWeight: '600', color: colors.foreground }}>Cancel</Text>
-              </Pressable>
-              <Pressable
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={() => {
                   setShowCompletionConfirm(false);
                   updateVentureStatus(venture.id, 'finished');
                   handleVentureCompletion(venture.id);
                 }}
-                style={({ pressed }) => [{ flex: 1, backgroundColor: colors.success, borderRadius: 12, paddingVertical: 13, alignItems: 'center', opacity: pressed ? 0.85 : 1 }]}
+                activeOpacity={0.85}
+                style={{ flex: 1, backgroundColor: colors.success, borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}
               >
                 <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>Mark Complete</Text>
-              </Pressable>
+              </TouchableOpacity>
             </View>
           </Pressable>
         </Pressable>
