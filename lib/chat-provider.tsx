@@ -114,11 +114,11 @@ export function StreamChatProvider({ children }: { children: React.ReactNode }) 
   const loadChannel = useCallback(async (ventureId: string, ventureName: string): Promise<Channel | null> => {
     const client = getStreamClient();
 
-    // Wait up to 8 seconds for Stream to be ready
+    // Wait up to 3 seconds for Stream to be ready (it should already be ready when called)
     let waited = 0;
-    while (!connectedUserId.current && waited < 8000) {
-      await new Promise(r => setTimeout(r, 300));
-      waited += 300;
+    while (!connectedUserId.current && waited < 3000) {
+      await new Promise(r => setTimeout(r, 200));
+      waited += 200;
     }
 
     if (!connectedUserId.current) {

@@ -157,17 +157,23 @@ export default function ChatScreen() {
   const [messageText, setMessageText] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [chatError, setChatError] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const initDoneRef = useRef(false);
 
-  // Load the Stream channel when the screen mounts
+  // Load the Stream channel — runs immediately when isReady becomes true,
+  // and also retries if isReady was already true when we mounted.
   useEffect(() => {
-    if (!id) return;
+    if (!id || !isReady || initDoneRef.current) return;
+    initDoneRef.current = true;
 
     async function init() {
       setLoading(true);
+      setChatError(false);
       const ch = await loadChannel(id!, ventureName);
       if (!ch) {
         setLoading(false);
+        setChatError(true);
         return;
       }
       setChannel(ch);
@@ -346,22 +352,21 @@ export default function ChatScreen() {
                   color={colors.border}
                 />
                 <Text style={{ fontSize: 15, color: colors.muted }}>
-                  {channel ? "No messages yet" : "Chat unavailable"}
+                  {chatError ? "Chat unavailable" : "No messages yet"}
                 </Text>
                 <Text style={{ fontSize: 13, color: colors.muted }}>
-                  {channel ? "Be the first to say something!" : "Could not connect to chat. Try again later."}
+                  {chatError ? "Could not connect to chat. Try again later." : "Be the first to say something!"}
                 </Text>
               </View>
             }
           />
         )}
 
-        {/* Input bar */}
+        {/* Input bar — fixed row so send button never disappears */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "flex-end",
-            gap: 8,
             paddingHorizontal: 12,
             paddingTop: 10,
             paddingBottom: Math.max(insets.bottom, 10) + 4,
@@ -370,7 +375,7 @@ export default function ChatScreen() {
             backgroundColor: colors.surface,
           }}
         >
-          {/* Text input */}
+          {/* Text input — flex:1 so it fills available space */}
           <View
             style={{
               flex: 1,
@@ -380,7 +385,8 @@ export default function ChatScreen() {
               borderColor: colors.border,
               paddingHorizontal: 14,
               paddingVertical: 8,
-              minHeight: 38,
+              minHeight: 40,
+              marginRight: 8,
             }}
           >
             <TextInput
@@ -392,32 +398,32 @@ export default function ChatScreen() {
                 fontSize: 14,
                 color: colors.foreground,
                 lineHeight: 20,
+                // Explicit max height so the input doesn't grow forever
+                maxHeight: 100,
               }}
               multiline
               maxLength={500}
               returnKeyType="default"
-              onSubmitEditing={handleSend}
             />
           </View>
 
-          {/* Send button */}
+          {/* Send button — flexShrink:0 ensures it never gets squeezed out */}
           <Pressable
             onPress={handleSend}
             disabled={!messageText.trim() || sending}
-            style={({ pressed }) => [
-              {
-                opacity: pressed ? 0.7 : 1,
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor:
-                  messageText.trim() && !sending
-                    ? colors.primary
-                    : colors.border,
-                alignItems: "center",
-                justifyContent: "center",
-              },
-            ]}
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.7 : 1,
+              width: 40,
+              height: 40,
+              flexShrink: 0,
+              borderRadius: 20,
+              backgroundColor:
+                messageText.trim() && !sending
+                  ? colors.primary
+                  : colors.border,
+              alignItems: "center",
+              justifyContent: "center",
+            })}
           >
             {sending ? (
               <ActivityIndicator size="small" color="white" />
