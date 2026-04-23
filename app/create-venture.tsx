@@ -1,11 +1,12 @@
 import React, { useState, useRef, useCallback } from "react";
 import {
-  Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Platform, KeyboardAvoidingView
+  Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Platform, KeyboardAvoidingView,
+  TouchableOpacity, Dimensions
 } from "react-native";
+
 import { DatePicker } from "@/components/ui/date-picker";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LocationPickerMap, type LocationPickerHandle } from "@/components/location-picker-map";
@@ -15,6 +16,8 @@ import { MOCK_USER } from "@/lib/mock-data";
 import type { Venture } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth-store";
 import { useStreamChat } from "@/lib/chat-provider";
+
+const SCREEN_W = Dimensions.get('window').width;
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -507,28 +510,30 @@ export default function CreateVentureScreen() {
       </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Navigation buttons — outside ScrollView so they always fill full width */}
-      <View style={[styles.navRow, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
+      {/* Navigation buttons — fixed at bottom, explicit pixel widths */}
+      <View style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.background }}>
         {step > 1 ? (
-          <Pressable
+          <TouchableOpacity
             onPress={() => setStep((step - 1) as Step)}
-            style={({ pressed }) => [styles.navBtnBack, { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.7 : 1 }]}
+            activeOpacity={0.7}
+            style={{ width: (SCREEN_W - 44) * 0.35, height: 56, borderRadius: 16, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}
           >
-            <Text style={[styles.backBtnText, { color: colors.foreground }]}>Back</Text>
-          </Pressable>
+            <Text style={{ fontWeight: '700', fontSize: 16, color: colors.foreground }}>Back</Text>
+          </TouchableOpacity>
         ) : null}
-        <Pressable
+        <TouchableOpacity
           onPress={() => {
             if (step < 4) setStep((step + 1) as Step);
             else handleLaunch();
           }}
           disabled={!canProceed()}
-          style={({ pressed }) => [styles.navBtnNext, { backgroundColor: canProceed() ? colors.primary : colors.border, opacity: (pressed || !canProceed()) ? 0.5 : 1 }]}
+          activeOpacity={0.8}
+          style={{ width: step > 1 ? (SCREEN_W - 44) * 0.65 : SCREEN_W - 32, height: 56, borderRadius: 16, backgroundColor: canProceed() ? colors.primary : colors.border, alignItems: 'center', justifyContent: 'center', opacity: canProceed() ? 1 : 0.5 }}
         >
-          <Text style={[styles.nextBtnText, { color: canProceed() ? 'white' : colors.muted }]}>
+          <Text style={{ fontWeight: '700', fontSize: 16, color: canProceed() ? 'white' : colors.muted }}>
             {step === 4 ? '🚀 Launch Venture' : 'Continue'}
           </Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
 
       {/* ── Location Picker Modal ──────────────────────────────────────── */}
