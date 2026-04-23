@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Alert, FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
+import { uploadImage } from "@/lib/upload";
+import { api } from "@/lib/api-client";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -179,6 +181,7 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
   const balance = missionTxs.reduce((sum, t) => sum + t.amount, 0);
 
   const [selectedPhotoIdx, setSelectedPhotoIdx] = useState<number | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const pickPhoto = async () => {
     try {
@@ -189,8 +192,20 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
         quality: 0.8,
       });
       if (!result.canceled && result.assets[0]) {
-        const newImages = [...venture.images, result.assets[0].uri];
-        updateVenture(venture.id, { images: newImages });
+        setUploadingPhoto(true);
+        try {
+          const remoteUrl = await uploadImage(result.assets[0].uri, 'venture-image');
+          // Keep only remote URLs (drop old local file:// URIs) then append new one
+          const existingRemote = venture.images.filter(u => u.startsWith('http'));
+          const newImages = [...existingRemote, remoteUrl];
+          updateVenture(venture.id, { images: newImages });
+          // Persist cover image to backend
+          await api.patch(`/ventures/${venture.id}`, { cover_image_url: newImages[0] }).catch(() => {});
+        } catch (err: any) {
+          Alert.alert('Upload failed', err?.message ?? 'Could not upload photo.');
+        } finally {
+          setUploadingPhoto(false);
+        }
       }
     } catch {
       Alert.alert('Photo upload', 'Could not access photo library.');
@@ -329,11 +344,18 @@ function MissionTab({ venture, onJoinPress, canJoin, alreadyRequested, onStatusC
           {canUploadPhoto && (
           <Pressable
             onPress={pickPhoto}
-            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+            disabled={uploadingPhoto}
+            style={({ pressed }) => [{ opacity: (pressed || uploadingPhoto) ? 0.7 : 1 }]}
           >
             <View style={{ width: 192, height: 128, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              <IconSymbol name="camera.fill" size={24} color={colors.primary} />
-              <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>Add Photo</Text>
+              {uploadingPhoto ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <>
+                  <IconSymbol name="camera.fill" size={24} color={colors.primary} />
+                  <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>Add Photo</Text>
+                </>
+              )}
             </View>
           </Pressable>
           )}
