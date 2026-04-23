@@ -1,15 +1,17 @@
 /**
- * AuthStore — in-memory user list with AsyncStorage session persistence.
- * Users: abhijeet/1234, priya/1234, rahul/1234 (expandable).
+ * AuthStore — real backend auth via cleanventures-api (Supabase JWT).
+ * Keeps the same AppUser interface so all screens work unchanged.
  */
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { api, saveTokens, clearTokens, getAccessToken } from "@/lib/api-client";
 
-const SESSION_KEY = "@cleanventures:session";
-const PROFILE_KEY = "@cleanventures:profiles";
+const SESSION_KEY = "@cleanventures:session_v2";
 
 export type AppUser = {
+  id: string;           // Supabase user UUID
   username: string;
+  email: string;
   displayName: string;
   avatar: string;
   city: string;
@@ -17,53 +19,61 @@ export type AppUser = {
   latitude?: number;
   longitude?: number;
   /** 'username' | 'displayName' */
-  publicNamePref?: 'username' | 'displayName';
+  publicNamePref?: "username" | "displayName";
 };
 
-// ─── In-memory user registry ──────────────────────────────────────────────────
-const BASE_USERS: Array<AppUser & { password: string }> = [
-  {
-    username: "abhijeet",
-    password: "1234",
-    displayName: "Abhijeet Patil",
-    avatar: "https://i.pravatar.cc/150?img=11",
-    city: "Pune, Maharashtra",
-    about: "Passionate about keeping Pune clean. Organising weekend cleanups since 2022.",
-    publicNamePref: "displayName",
-  },
-  {
-    username: "priya",
-    password: "1234",
-    displayName: "Priya Mehta",
-    avatar: "https://i.pravatar.cc/150?img=5",
-    city: "Mumbai, Maharashtra",
-    about: "Marine drive cleanup volunteer. Let's make Mumbai spotless!",
-    publicNamePref: "displayName",
-  },
-  {
-    username: "rahul",
-    password: "1234",
-    displayName: "Rahul Desai",
-    avatar: "https://i.pravatar.cc/150?img=33",
-    city: "Nashik, Maharashtra",
-    about: "Nashik cleanup crew lead. Every piece of trash picked up matters.",
-    publicNamePref: "username",
-  },
-];
+// ─── API response shapes ──────────────────────────────────────────────────────
+type AuthResponse = {
+  access_token: string;
+  refresh_token: string;
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    full_name: string;
+    avatar_url: string | null;
+    city: string | null;
+    about: string | null;
+    display_name_pref: string | null;
+  };
+};
+
+function mapApiUser(u: AuthResponse["user"]): AppUser {
+  return {
+    id: u.id,
+    username: u.username,
+    email: u.email,
+    displayName: u.full_name || u.username,
+    avatar: u.avatar_url || `https://i.pravatar.cc/150?u=${u.username}`,
+    city: u.city || "",
+    about: u.about || undefined,
+    publicNamePref: (u.display_name_pref as AppUser["publicNamePref"]) || "displayName",
+  };
+}
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 type AuthContextValue = {
   user: AppUser | null;
   loading: boolean;
-  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (
+    emailOrUsername: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  register: (
+    email: string,
+    password: string,
+    username: string,
+    fullName: string
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  updateProfile: (updates: Partial<Omit<AppUser, 'username'>>) => Promise<void>;
+  updateProfile: (updates: Partial<Omit<AppUser, "id" | "username" | "email">>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   loading: true,
   login: async () => ({ success: false }),
+  register: async () => ({ success: false }),
   logout: async () => {},
   updateProfile: async () => {},
 });
@@ -72,69 +82,120 @@ const AuthContext = createContext<AuthContextValue>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-  // profile overrides keyed by username
-  const [profileOverrides, setProfileOverrides] = useState<Record<string, Partial<AppUser>>>({});
 
-  // Load saved profiles + session on mount
+  // Restore session on mount
   useEffect(() => {
-    Promise.all([
-      AsyncStorage.getItem(SESSION_KEY),
-      AsyncStorage.getItem(PROFILE_KEY),
-    ])
-      .then(([rawSession, rawProfiles]) => {
-        const overrides: Record<string, Partial<AppUser>> = rawProfiles ? JSON.parse(rawProfiles) : {};
-        setProfileOverrides(overrides);
-        if (rawSession) {
-          const saved: AppUser = JSON.parse(rawSession);
-          const found = BASE_USERS.find(u => u.username === saved.username);
-          if (found) {
-            const { password: _, ...base } = found;
-            const merged: AppUser = { ...base, ...(overrides[found.username] || {}) };
-            setUser(merged);
-          }
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    (async () => {
+      try {
+        const token = await getAccessToken();
+        if (!token) return;
+        // Try to fetch current user from API
+        const data = await api.get<AuthResponse["user"]>("/auth/me");
+        const appUser = mapApiUser(data);
+        setUser(appUser);
+        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(appUser));
+      } catch {
+        // Token expired or invalid — clear it
+        await clearTokens();
+        await AsyncStorage.removeItem(SESSION_KEY);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  const login = useCallback(async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    const found = BASE_USERS.find(
-      u => u.username.toLowerCase() === username.toLowerCase().trim() && u.password === password
-    );
-    if (!found) {
-      return { success: false, error: "Invalid username or password." };
-    }
-    const { password: _, ...base } = found;
-    // Load latest overrides from storage
-    const rawProfiles = await AsyncStorage.getItem(PROFILE_KEY).catch(() => null);
-    const overrides: Record<string, Partial<AppUser>> = rawProfiles ? JSON.parse(rawProfiles) : {};
-    setProfileOverrides(overrides);
-    const merged: AppUser = { ...base, ...(overrides[found.username] || {}) };
-    setUser(merged);
-    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(merged)).catch(() => {});
-    return { success: true };
-  }, []);
+  const login = useCallback(
+    async (
+      emailOrUsername: string,
+      password: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        // The API accepts email; if user typed a username, append a domain
+        const email = emailOrUsername.includes("@")
+          ? emailOrUsername
+          : `${emailOrUsername.toLowerCase().trim()}@cleanventures.app`;
+
+        const data = await api.postNoAuth<AuthResponse>("/auth/login", {
+          email,
+          password,
+        });
+        await saveTokens(data.access_token, data.refresh_token);
+        const appUser = mapApiUser(data.user);
+        setUser(appUser);
+        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(appUser));
+        return { success: true };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Login failed.";
+        return { success: false, error: msg };
+      }
+    },
+    []
+  );
+
+  const register = useCallback(
+    async (
+      email: string,
+      password: string,
+      username: string,
+      fullName: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        const data = await api.postNoAuth<AuthResponse>("/auth/register", {
+          email,
+          password,
+          username,
+          full_name: fullName,
+        });
+        await saveTokens(data.access_token, data.refresh_token);
+        const appUser = mapApiUser(data.user);
+        setUser(appUser);
+        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(appUser));
+        return { success: true };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Registration failed.";
+        return { success: false, error: msg };
+      }
+    },
+    []
+  );
 
   const logout = useCallback(async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {}
+    await clearTokens();
+    await AsyncStorage.removeItem(SESSION_KEY);
     setUser(null);
-    await AsyncStorage.removeItem(SESSION_KEY).catch(() => {});
   }, []);
 
-  const updateProfile = useCallback(async (updates: Partial<Omit<AppUser, 'username'>>) => {
-    if (!user) return;
-    const rawProfiles = await AsyncStorage.getItem(PROFILE_KEY).catch(() => null);
-    const overrides: Record<string, Partial<AppUser>> = rawProfiles ? JSON.parse(rawProfiles) : {};
-    overrides[user.username] = { ...(overrides[user.username] || {}), ...updates };
-    await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(overrides)).catch(() => {});
-    setProfileOverrides(overrides);
-    const updated: AppUser = { ...user, ...updates };
-    setUser(updated);
-    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(updated)).catch(() => {});
-  }, [user]);
+  const updateProfile = useCallback(
+    async (updates: Partial<Omit<AppUser, "id" | "username" | "email">>) => {
+      if (!user) return;
+      try {
+        const payload: Record<string, unknown> = {};
+        if (updates.displayName !== undefined) payload.full_name = updates.displayName;
+        if (updates.avatar !== undefined) payload.avatar_url = updates.avatar;
+        if (updates.city !== undefined) payload.city = updates.city;
+        if (updates.about !== undefined) payload.about = updates.about;
+        if (updates.publicNamePref !== undefined)
+          payload.display_name_pref = updates.publicNamePref;
+
+        const data = await api.patch<AuthResponse["user"]>("/auth/me", payload);
+        const updated = mapApiUser(data);
+        setUser(updated);
+        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+      } catch (err) {
+        // Optimistic update locally even if API fails
+        const updated: AppUser = { ...user, ...updates };
+        setUser(updated);
+        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+      }
+    },
+    [user]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

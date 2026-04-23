@@ -1506,10 +1506,18 @@ export default function VentureDetailScreen() {
   const [joinSubmitted, setJoinSubmitted] = useState(false);
 
   const { ventures, updateVentureStatus, addJoinRequest, hasRequestedJoin, addMember, getMemberForUser,
-    getPledgesForVenture, recordPledge, removePledge, addVentureTx, removeMember, getMembersForVenture, getVentureTxs } = useVentures();
+    getPledgesForVenture, recordPledge, removePledge, addVentureTx, removeMember, getMembersForVenture, getVentureTxs,
+    refreshVentures, refreshTasksForVenture } = useVentures();
   const { user: authUser } = useAuth();
   const { emit: emitActivity } = useActivity();
   const { deduct: deductWallet, topup: topupWallet } = useWallet();
+
+  // Fetch tasks from backend when this venture detail screen mounts
+  useEffect(() => {
+    if (id) {
+      refreshTasksForVenture(id).catch(() => {});
+    }
+  }, [id]);
 
   // ─── Financial lifecycle helpers ─────────────────────────────────────────────
 

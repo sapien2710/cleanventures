@@ -7,6 +7,7 @@ import {
   ScrollView,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -17,22 +18,33 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 export default function SignInScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, register } = useAuth();
 
-  const [username, setUsername] = useState("");
+  const [tab, setTab] = useState<"login" | "register">("login");
+
+  // Login fields
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // Register fields
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regUsername, setRegUsername] = useState("");
+  const [regFullName, setRegFullName] = useState("");
+  const [showRegPassword, setShowRegPassword] = useState(false);
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!username.trim() || !password) {
-      setError("Please enter your username and password.");
+    if (!email.trim() || !password) {
+      setError("Please enter your email/username and password.");
       return;
     }
     setLoading(true);
     setError("");
-    const result = await login(username, password);
+    const result = await login(email.trim(), password);
     setLoading(false);
     if (result.success) {
       router.replace("/(tabs)");
@@ -40,6 +52,42 @@ export default function SignInScreen() {
       setError(result.error ?? "Login failed.");
     }
   };
+
+  const handleRegister = async () => {
+    if (!regEmail.trim() || !regPassword || !regUsername.trim() || !regFullName.trim()) {
+      setError("Please fill in all fields.");
+      return;
+    }
+    if (!regEmail.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (regPassword.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    const result = await register(regEmail.trim(), regPassword, regUsername.trim(), regFullName.trim());
+    setLoading(false);
+    if (result.success) {
+      router.replace("/(tabs)");
+    } else {
+      setError(result.error ?? "Registration failed.");
+    }
+  };
+
+  const inputStyle = (active: boolean) => ({
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 10,
+    borderWidth: 1.5,
+    borderColor: active ? colors.primary : colors.border,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: colors.background,
+  });
 
   return (
     <KeyboardAvoidingView
@@ -52,7 +100,7 @@ export default function SignInScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Logo + branding */}
-        <View style={{ alignItems: "center", marginBottom: 40, gap: 12 }}>
+        <View style={{ alignItems: "center", marginBottom: 32, gap: 12 }}>
           <View
             style={{
               width: 80,
@@ -89,186 +137,215 @@ export default function SignInScreen() {
             gap: 18,
           }}
         >
-          <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground }}>
-            Sign In
-          </Text>
-
-          {/* Username */}
-          <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 13, fontWeight: "600", color: colors.foreground }}>
-              Username
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                borderWidth: 1.5,
-                borderColor: username ? colors.primary : colors.border,
-                borderRadius: 14,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                backgroundColor: colors.background,
-              }}
-            >
-              <IconSymbol name="person.fill" size={18} color={username ? colors.primary : colors.muted} />
-              <TextInput
-                value={username}
-                onChangeText={v => { setUsername(v); setError(""); }}
-                placeholder="Enter your username"
-                placeholderTextColor={colors.muted}
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="next"
-                style={{ flex: 1, fontSize: 15, color: colors.foreground }}
-              />
-            </View>
-          </View>
-
-          {/* Password */}
-          <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 13, fontWeight: "600", color: colors.foreground }}>
-              Password
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                borderWidth: 1.5,
-                borderColor: password ? colors.primary : colors.border,
-                borderRadius: 14,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                backgroundColor: colors.background,
-              }}
-            >
-              <IconSymbol name="lock.fill" size={18} color={password ? colors.primary : colors.muted} />
-              <TextInput
-                value={password}
-                onChangeText={v => { setPassword(v); setError(""); }}
-                placeholder="Enter your password"
-                placeholderTextColor={colors.muted}
-                secureTextEntry={!showPassword}
-                returnKeyType="done"
-                onSubmitEditing={handleLogin}
-                style={{ flex: 1, fontSize: 15, color: colors.foreground }}
-              />
-              <Pressable
-                onPress={() => setShowPassword(s => !s)}
-                style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
-              >
-                <IconSymbol
-                  name={showPassword ? "eye.slash.fill" : "eye.fill"}
-                  size={18}
-                  color={colors.muted}
-                />
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Error */}
-          {error ? (
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                backgroundColor: colors.error + "15",
-                borderRadius: 12,
-                padding: 12,
-              }}
-            >
-              <IconSymbol name="exclamationmark.circle.fill" size={16} color={colors.error} />
-              <Text style={{ fontSize: 13, color: colors.error, flex: 1 }}>{error}</Text>
-            </View>
-          ) : null}
-
-          {/* Sign In button */}
-          <Pressable
-            onPress={handleLogin}
-            disabled={loading}
-            style={({ pressed }) => [{ opacity: pressed || loading ? 0.75 : 1 }]}
-          >
-            <View
-              style={{
-                backgroundColor: colors.primary,
-                borderRadius: 16,
-                paddingVertical: 16,
-                alignItems: "center",
-                flexDirection: "row",
-                justifyContent: "center",
-                gap: 8,
-              }}
-            >
-              {loading ? (
-                <IconSymbol name="arrow.clockwise" size={18} color="white" />
-              ) : (
-                <IconSymbol name="arrow.right.circle.fill" size={18} color="white" />
-              )}
-              <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
-                {loading ? "Signing in…" : "Sign In"}
-              </Text>
-            </View>
-          </Pressable>
-
-          {/* Hint */}
-          <View
-            style={{
-              backgroundColor: colors.primaryLight,
-              borderRadius: 12,
-              padding: 12,
-              gap: 4,
-            }}
-          >
-            <Text style={{ fontSize: 12, fontWeight: "600", color: colors.primary }}>
-              Demo Credentials (all use password: 1234)
-            </Text>
-            <Text style={{ fontSize: 12, color: colors.primary + "CC" }}>
-              <Text style={{ fontWeight: "700" }}>abhijeet</Text> — Owner/Co-owner on most ventures
-            </Text>
-            <Text style={{ fontSize: 12, color: colors.primary + "CC" }}>
-              <Text style={{ fontWeight: "700" }}>priya</Text> — Admin &amp; Viewer on select ventures
-            </Text>
-            <Text style={{ fontSize: 12, color: colors.primary + "CC" }}>
-              <Text style={{ fontWeight: "700" }}>rahul</Text> — Co-owner, Admin &amp; Viewer across ventures
-            </Text>
-          </View>
-        </View>
-
-        {/* Google sign-in placeholder */}
-        <Pressable
-          style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, marginTop: 16 }]}
-          onPress={() => {}}
-        >
+          {/* Tab switcher */}
           <View
             style={{
               flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              borderWidth: 1.5,
+              backgroundColor: colors.background,
+              borderRadius: 14,
+              borderWidth: 1,
               borderColor: colors.border,
-              borderRadius: 16,
-              paddingVertical: 14,
-              backgroundColor: colors.surface,
+              padding: 4,
             }}
           >
-            <Text style={{ fontSize: 18 }}>G</Text>
-            <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>
-              Continue with Google
-            </Text>
-            <View
+            <TouchableOpacity
+              onPress={() => { setTab("login"); setError(""); }}
               style={{
-                backgroundColor: colors.warning + "20",
-                borderRadius: 8,
-                paddingHorizontal: 6,
-                paddingVertical: 2,
+                flex: 1,
+                paddingVertical: 10,
+                borderRadius: 10,
+                alignItems: "center",
+                backgroundColor: tab === "login" ? colors.primary : "transparent",
               }}
             >
-              <Text style={{ fontSize: 10, fontWeight: "700", color: colors.warning }}>
-                Coming Soon
+              <Text style={{ fontWeight: "700", fontSize: 14, color: tab === "login" ? "white" : colors.muted }}>
+                Sign In
               </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => { setTab("register"); setError(""); }}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                borderRadius: 10,
+                alignItems: "center",
+                backgroundColor: tab === "register" ? colors.primary : "transparent",
+              }}
+            >
+              <Text style={{ fontWeight: "700", fontSize: 14, color: tab === "register" ? "white" : colors.muted }}>
+                Register
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {tab === "login" ? (
+            <>
+              {/* Email / Username */}
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: colors.foreground }}>
+                  Email or Username
+                </Text>
+                <View style={inputStyle(!!email)}>
+                  <IconSymbol name="person.fill" size={18} color={email ? colors.primary : colors.muted} />
+                  <TextInput
+                    value={email}
+                    onChangeText={v => { setEmail(v); setError(""); }}
+                    placeholder="Enter your email or username"
+                    placeholderTextColor={colors.muted}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="email-address"
+                    returnKeyType="next"
+                    style={{ flex: 1, fontSize: 15, color: colors.foreground }}
+                  />
+                </View>
+              </View>
+
+              {/* Password */}
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: colors.foreground }}>
+                  Password
+                </Text>
+                <View style={inputStyle(!!password)}>
+                  <IconSymbol name="lock.fill" size={18} color={password ? colors.primary : colors.muted} />
+                  <TextInput
+                    value={password}
+                    onChangeText={v => { setPassword(v); setError(""); }}
+                    placeholder="Enter your password"
+                    placeholderTextColor={colors.muted}
+                    secureTextEntry={!showPassword}
+                    returnKeyType="done"
+                    onSubmitEditing={handleLogin}
+                    style={{ flex: 1, fontSize: 15, color: colors.foreground }}
+                  />
+                  <Pressable onPress={() => setShowPassword(s => !s)} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
+                    <IconSymbol name={showPassword ? "eye.slash.fill" : "eye.fill"} size={18} color={colors.muted} />
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Error */}
+              {error ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.error + "15", borderRadius: 12, padding: 12 }}>
+                  <IconSymbol name="exclamationmark.circle.fill" size={16} color={colors.error} />
+                  <Text style={{ fontSize: 13, color: colors.error, flex: 1 }}>{error}</Text>
+                </View>
+              ) : null}
+
+              {/* Sign In button */}
+              <Pressable onPress={handleLogin} disabled={loading} style={({ pressed }) => [{ opacity: pressed || loading ? 0.75 : 1 }]}>
+                <View style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 }}>
+                  <IconSymbol name={loading ? "arrow.clockwise" : "arrow.right.circle.fill"} size={18} color="white" />
+                  <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
+                    {loading ? "Signing in…" : "Sign In"}
+                  </Text>
+                </View>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              {/* Full Name */}
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: colors.foreground }}>Full Name</Text>
+                <View style={inputStyle(!!regFullName)}>
+                  <IconSymbol name="person.fill" size={18} color={regFullName ? colors.primary : colors.muted} />
+                  <TextInput
+                    value={regFullName}
+                    onChangeText={v => { setRegFullName(v); setError(""); }}
+                    placeholder="Your full name"
+                    placeholderTextColor={colors.muted}
+                    autoCapitalize="words"
+                    returnKeyType="next"
+                    style={{ flex: 1, fontSize: 15, color: colors.foreground }}
+                  />
+                </View>
+              </View>
+
+              {/* Username */}
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: colors.foreground }}>Username</Text>
+                <View style={inputStyle(!!regUsername)}>
+                  <IconSymbol name="at" size={18} color={regUsername ? colors.primary : colors.muted} />
+                  <TextInput
+                    value={regUsername}
+                    onChangeText={v => { setRegUsername(v.toLowerCase().replace(/\s/g, "")); setError(""); }}
+                    placeholder="Choose a username"
+                    placeholderTextColor={colors.muted}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="next"
+                    style={{ flex: 1, fontSize: 15, color: colors.foreground }}
+                  />
+                </View>
+              </View>
+
+              {/* Email */}
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: colors.foreground }}>Email</Text>
+                <View style={inputStyle(!!regEmail)}>
+                  <IconSymbol name="envelope.fill" size={18} color={regEmail ? colors.primary : colors.muted} />
+                  <TextInput
+                    value={regEmail}
+                    onChangeText={v => { setRegEmail(v); setError(""); }}
+                    placeholder="your@email.com"
+                    placeholderTextColor={colors.muted}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    returnKeyType="next"
+                    style={{ flex: 1, fontSize: 15, color: colors.foreground }}
+                  />
+                </View>
+              </View>
+
+              {/* Password */}
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: colors.foreground }}>Password</Text>
+                <View style={inputStyle(!!regPassword)}>
+                  <IconSymbol name="lock.fill" size={18} color={regPassword ? colors.primary : colors.muted} />
+                  <TextInput
+                    value={regPassword}
+                    onChangeText={v => { setRegPassword(v); setError(""); }}
+                    placeholder="Min. 6 characters"
+                    placeholderTextColor={colors.muted}
+                    secureTextEntry={!showRegPassword}
+                    returnKeyType="done"
+                    onSubmitEditing={handleRegister}
+                    style={{ flex: 1, fontSize: 15, color: colors.foreground }}
+                  />
+                  <Pressable onPress={() => setShowRegPassword(s => !s)} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
+                    <IconSymbol name={showRegPassword ? "eye.slash.fill" : "eye.fill"} size={18} color={colors.muted} />
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Error */}
+              {error ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.error + "15", borderRadius: 12, padding: 12 }}>
+                  <IconSymbol name="exclamationmark.circle.fill" size={16} color={colors.error} />
+                  <Text style={{ fontSize: 13, color: colors.error, flex: 1 }}>{error}</Text>
+                </View>
+              ) : null}
+
+              {/* Register button */}
+              <Pressable onPress={handleRegister} disabled={loading} style={({ pressed }) => [{ opacity: pressed || loading ? 0.75 : 1 }]}>
+                <View style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 }}>
+                  <IconSymbol name={loading ? "arrow.clockwise" : "person.badge.plus"} size={18} color="white" />
+                  <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
+                    {loading ? "Creating account…" : "Create Account"}
+                  </Text>
+                </View>
+              </Pressable>
+            </>
+          )}
+        </View>
+
+        {/* Google sign-in placeholder */}
+        <Pressable style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, marginTop: 16 }]} onPress={() => {}}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, borderWidth: 1.5, borderColor: colors.border, borderRadius: 16, paddingVertical: 14, backgroundColor: colors.surface }}>
+            <Text style={{ fontSize: 18 }}>G</Text>
+            <Text style={{ fontSize: 15, fontWeight: "600", color: colors.foreground }}>Continue with Google</Text>
+            <View style={{ backgroundColor: colors.warning + "20", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
+              <Text style={{ fontSize: 10, fontWeight: "700", color: colors.warning }}>Coming Soon</Text>
             </View>
           </View>
         </Pressable>

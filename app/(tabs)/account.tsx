@@ -604,26 +604,12 @@ export default function AccountScreen() {
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => setShowSwitchUser(false)}>
           <Pressable onPress={() => {}} style={{ backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 40 }}>
             <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 20 }} />
-            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.foreground, marginBottom: 4 }}>Switch User</Text>
-            <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 16 }}>All demo accounts use password: 1234</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
-              {(['abhijeet', 'priya', 'rahul'] as const).map(u => (
-                <Pressable key={u} onPress={() => { setSwitchUsername(u); setSwitchPassword('1234'); }} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
-                  <View style={[
-                    { borderRadius: 22, paddingVertical: 10, paddingHorizontal: 20, alignItems: 'center', borderWidth: 1.5, minWidth: 90 },
-                    switchUsername === u
-                      ? { backgroundColor: colors.primary + '20', borderColor: colors.primary }
-                      : { backgroundColor: colors.background, borderColor: colors.border },
-                  ]}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: switchUsername === u ? colors.primary : colors.foreground }}>{u}</Text>
-                  </View>
-                </Pressable>
-              ))}
-            </View>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.foreground, marginBottom: 4 }}>Switch Account</Text>
+            <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 16 }}>Sign in with a different account</Text>
             <View style={{ gap: 12 }}>
               <View style={{ backgroundColor: colors.background, borderRadius: 12, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14, paddingVertical: 12 }}>
-                <Text style={{ fontSize: 11, color: colors.muted, fontWeight: '600', marginBottom: 4 }}>USERNAME</Text>
-                <TextInput value={switchUsername} onChangeText={setSwitchUsername} placeholder="e.g. priya" placeholderTextColor={colors.muted} autoCapitalize="none" autoCorrect={false} style={{ fontSize: 15, color: colors.foreground }} returnKeyType="next" />
+                <Text style={{ fontSize: 11, color: colors.muted, fontWeight: '600', marginBottom: 4 }}>EMAIL OR USERNAME</Text>
+                <TextInput value={switchUsername} onChangeText={setSwitchUsername} placeholder="your@email.com or username" placeholderTextColor={colors.muted} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" style={{ fontSize: 15, color: colors.foreground }} returnKeyType="next" />
               </View>
               <View style={{ backgroundColor: colors.background, borderRadius: 12, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14, paddingVertical: 12 }}>
                 <Text style={{ fontSize: 11, color: colors.muted, fontWeight: '600', marginBottom: 4 }}>PASSWORD</Text>

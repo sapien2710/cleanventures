@@ -1,17 +1,24 @@
 /**
- * VenturesStore — persisted state for ventures, tasks, join requests, members, and venture transactions.
- * Uses AsyncStorage so data survives app restarts.
+ * VenturesStore — real backend via cleanventures-api.
+ * Keeps the exact same context interface so all screens work unchanged.
+ * Local-only features (join requests, pledges, venture txs) remain in AsyncStorage.
  */
-import React, { createContext, useContext, useEffect, useReducer, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useReducer, useCallback, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { MOCK_VENTURES, MOCK_TASKS, MOCK_TRANSACTIONS, MOCK_JOIN_REQUESTS, type Venture, type Task, type JoinRequest, type VentureStatus, type UserRole, type UserPrivilege, type Transaction } from "@/lib/mock-data";
+import { api } from "@/lib/api-client";
+import { useAuth } from "@/lib/auth-store";
+import {
+  type Venture,
+  type Task,
+  type JoinRequest,
+  type VentureStatus,
+  type UserRole,
+  type UserPrivilege,
+  type Transaction,
+} from "@/lib/mock-data";
 
-const VENTURES_KEY = "@cleanventures:ventures";
-const TASKS_KEY = "@cleanventures:tasks";
-const JOIN_REQUESTS_KEY = "@cleanventures:join_requests_v2"; // v2 = full request objects
-const MEMBERS_KEY = "@cleanventures:members";
-const SCHEMA_VERSION_KEY = "@cleanventures:schema_version";
-const CURRENT_SCHEMA_VERSION = "v17"; // bump this when seed data changes significantly
+// ─── Local-only persistence keys ─────────────────────────────────────────────
+const JOIN_REQUESTS_KEY = "@cleanventures:join_requests_v2";
 const VENTURE_TXS_KEY = "@cleanventures:venture_txs";
 const PLEDGES_KEY = "@cleanventures:pledges";
 
@@ -19,26 +26,26 @@ const PLEDGES_KEY = "@cleanventures:pledges";
 
 export type VentureMember = {
   id: string;
-  username: string;        // Display name shown in UI
-  authUsername?: string;   // Matches AppUser.username for permission lookup
+  username: string;
+  authUsername?: string;
   avatar: string;
   role: UserRole;
   privilege: UserPrivilege | null;
   isOwner?: boolean;
 };
 
-type TasksMap = Record<string, Task[]>;                    // ventureId → Task[]
-type JoinRequestsMap = Record<string, JoinRequest[]>;      // ventureId → JoinRequest[] (with status)
-type MembersMap = Record<string, VentureMember[]>;         // ventureId → VentureMember[]
-type VentureTxsMap = Record<string, Transaction[]>;        // ventureId → Transaction[]
+type TasksMap = Record<string, Task[]>;
+type JoinRequestsMap = Record<string, JoinRequest[]>;
+type MembersMap = Record<string, VentureMember[]>;
+type VentureTxsMap = Record<string, Transaction[]>;
 
 export type Pledge = {
-  authUsername: string;  // The user who pledged
-  displayName: string;   // For display
-  amount: number;        // Amount pledged (deducted from wallet on approval)
+  authUsername: string;
+  displayName: string;
+  amount: number;
   ventureId: string;
 };
-type PledgesMap = Record<string, Pledge[]>; // ventureId → Pledge[]
+type PledgesMap = Record<string, Pledge[]>;
 
 type State = {
   ventures: Venture[];
@@ -51,25 +58,30 @@ type State = {
 };
 
 type Action =
-  | { type: "LOAD"; ventures: Venture[]; tasks: TasksMap; joinRequests: JoinRequestsMap; members: MembersMap; ventureTxs: VentureTxsMap; pledges: PledgesMap }
+  | { type: "SET_VENTURES"; ventures: Venture[]; members: MembersMap }
+  | { type: "SET_TASKS"; ventureId: string; tasks: Task[] }
   | { type: "ADD_VENTURE"; venture: Venture; ownerMember?: VentureMember }
   | { type: "UPDATE_VENTURE"; id: string; patch: Partial<Venture> }
   | { type: "ADD_TASK"; ventureId: string; task: Task }
   | { type: "UPDATE_TASK"; ventureId: string; taskId: string; patch: Partial<Task> }
   | { type: "ADD_JOIN_REQUEST"; ventureId: string; request: JoinRequest }
-  | { type: "UPDATE_JOIN_REQUEST_STATUS"; ventureId: string; requestId: string; status: 'approved' | 'denied' }
+  | { type: "UPDATE_JOIN_REQUEST_STATUS"; ventureId: string; requestId: string; status: "approved" | "denied" }
   | { type: "REJECT_ALL_PENDING_REQUESTS"; ventureId: string }
   | { type: "ADD_MEMBER"; ventureId: string; member: VentureMember }
   | { type: "REMOVE_MEMBER"; ventureId: string; memberId: string }
   | { type: "UPDATE_MEMBER"; ventureId: string; memberId: string; patch: Partial<VentureMember> }
   | { type: "ADD_VENTURE_TX"; ventureId: string; tx: Transaction }
   | { type: "RECORD_PLEDGE"; pledge: Pledge }
-  | { type: "REMOVE_PLEDGE"; ventureId: string; authUsername: string };
+  | { type: "REMOVE_PLEDGE"; ventureId: string; authUsername: string }
+  | { type: "LOAD_LOCAL"; joinRequests: JoinRequestsMap; ventureTxs: VentureTxsMap; pledges: PledgesMap; loaded: true };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "LOAD":
-      return { ventures: action.ventures, tasks: action.tasks, joinRequests: action.joinRequests, members: action.members, ventureTxs: action.ventureTxs, pledges: action.pledges, loaded: true };
+    case "SET_VENTURES":
+      return { ...state, ventures: action.ventures, members: { ...state.members, ...action.members }, loaded: true };
+
+    case "SET_TASKS":
+      return { ...state, tasks: { ...state.tasks, [action.ventureId]: action.tasks } };
 
     case "ADD_VENTURE": {
       const newMembers = action.ownerMember
@@ -79,230 +91,149 @@ function reducer(state: State, action: Action): State {
     }
 
     case "UPDATE_VENTURE":
-      return {
-        ...state,
-        ventures: state.ventures.map(v =>
-          v.id === action.id ? { ...v, ...action.patch } : v
-        ),
-      };
+      return { ...state, ventures: state.ventures.map(v => v.id === action.id ? { ...v, ...action.patch } : v) };
 
     case "ADD_TASK": {
       const existing = state.tasks[action.ventureId] ?? [];
-      return {
-        ...state,
-        tasks: {
-          ...state.tasks,
-          [action.ventureId]: [action.task, ...existing],
-        },
-      };
+      return { ...state, tasks: { ...state.tasks, [action.ventureId]: [action.task, ...existing] } };
     }
 
     case "UPDATE_TASK": {
       const existing = state.tasks[action.ventureId] ?? [];
-      return {
-        ...state,
-        tasks: {
-          ...state.tasks,
-          [action.ventureId]: existing.map(t =>
-            t.id === action.taskId ? { ...t, ...action.patch } : t
-          ),
-        },
-      };
+      return { ...state, tasks: { ...state.tasks, [action.ventureId]: existing.map(t => t.id === action.taskId ? { ...t, ...action.patch } : t) } };
     }
 
     case "ADD_JOIN_REQUEST": {
       const existing = state.joinRequests[action.ventureId] ?? [];
-      // Don't add duplicate requests from the same user
       if (existing.some(r => r.id === action.request.id)) return state;
-      return {
-        ...state,
-        joinRequests: {
-          ...state.joinRequests,
-          [action.ventureId]: [...existing, action.request],
-        },
-      };
+      return { ...state, joinRequests: { ...state.joinRequests, [action.ventureId]: [...existing, action.request] } };
     }
 
     case "UPDATE_JOIN_REQUEST_STATUS": {
       const existing = state.joinRequests[action.ventureId] ?? [];
-      return {
-        ...state,
-        joinRequests: {
-          ...state.joinRequests,
-          [action.ventureId]: existing.map(r =>
-            r.id === action.requestId ? { ...r, status: action.status } : r
-          ),
-        },
-      };
+      return { ...state, joinRequests: { ...state.joinRequests, [action.ventureId]: existing.map(r => r.id === action.requestId ? { ...r, status: action.status } : r) } };
     }
 
     case "REJECT_ALL_PENDING_REQUESTS": {
       const existing = state.joinRequests[action.ventureId] ?? [];
-      return {
-        ...state,
-        joinRequests: {
-          ...state.joinRequests,
-          [action.ventureId]: existing.map(r =>
-            (!r.status || r.status === 'pending') ? { ...r, status: 'denied' as const } : r
-          ),
-        },
-      };
+      return { ...state, joinRequests: { ...state.joinRequests, [action.ventureId]: existing.map(r => (!r.status || r.status === "pending") ? { ...r, status: "denied" as const } : r) } };
     }
 
     case "ADD_MEMBER": {
       const existing = state.members[action.ventureId] ?? [];
       if (existing.some(m => m.id === action.member.id)) return state;
-      return {
-        ...state,
-        members: {
-          ...state.members,
-          [action.ventureId]: [...existing, action.member],
-        },
-      };
+      return { ...state, members: { ...state.members, [action.ventureId]: [...existing, action.member] } };
     }
 
     case "REMOVE_MEMBER": {
       const existing = state.members[action.ventureId] ?? [];
-      return {
-        ...state,
-        members: {
-          ...state.members,
-          [action.ventureId]: existing.filter(m => m.id !== action.memberId),
-        },
-      };
+      return { ...state, members: { ...state.members, [action.ventureId]: existing.filter(m => m.id !== action.memberId) } };
     }
 
     case "UPDATE_MEMBER": {
       const existing = state.members[action.ventureId] ?? [];
-      return {
-        ...state,
-        members: {
-          ...state.members,
-          [action.ventureId]: existing.map(m =>
-            m.id === action.memberId ? { ...m, ...action.patch } : m
-          ),
-        },
-      };
+      return { ...state, members: { ...state.members, [action.ventureId]: existing.map(m => m.id === action.memberId ? { ...m, ...action.patch } : m) } };
     }
 
     case "ADD_VENTURE_TX": {
       const existing = state.ventureTxs[action.ventureId] ?? [];
-      return {
-        ...state,
-        ventureTxs: {
-          ...state.ventureTxs,
-          [action.ventureId]: [action.tx, ...existing],
-        },
-      };
+      return { ...state, ventureTxs: { ...state.ventureTxs, [action.ventureId]: [action.tx, ...existing] } };
     }
 
     case "RECORD_PLEDGE": {
       const { ventureId, authUsername } = action.pledge;
       const existing = (state.pledges[ventureId] ?? []).filter(p => p.authUsername !== authUsername);
-      return {
-        ...state,
-        pledges: { ...state.pledges, [ventureId]: [...existing, action.pledge] },
-      };
+      return { ...state, pledges: { ...state.pledges, [ventureId]: [...existing, action.pledge] } };
     }
 
     case "REMOVE_PLEDGE": {
       const existing = state.pledges[action.ventureId] ?? [];
-      return {
-        ...state,
-        pledges: { ...state.pledges, [action.ventureId]: existing.filter(p => p.authUsername !== action.authUsername) },
-      };
+      return { ...state, pledges: { ...state.pledges, [action.ventureId]: existing.filter(p => p.authUsername !== action.authUsername) } };
     }
+
+    case "LOAD_LOCAL":
+      return { ...state, joinRequests: action.joinRequests, ventureTxs: action.ventureTxs, pledges: action.pledges, loaded: true };
 
     default:
       return state;
   }
 }
 
-// ─── Seed initial members per venture ────────────────────────────────────────
+// ─── Backend → UI adapter ─────────────────────────────────────────────────────
 
-// Role matrix:
-//   abhijeet: owner on v1, v3; co-owner on v5, v6; admin on v9; viewer on v2
-//   priya:    owner on v2, v8; co-owner on v1; admin on v5, v7; viewer on v3
-//   rahul:    owner on v7; co-owner on v9; admin on v1, v3; viewer on v5, v8
-function buildInitialMembers(): MembersMap {
+/** Maps a raw backend venture row to the frontend Venture shape */
+function adaptVenture(raw: any, myRole?: string): Venture {
   return {
-    // v1: abhijeet = owner, priya = co-owner, rahul = admin
-    v1: [
-      { id: 'owner-v1',       username: 'Abhijeet P.', authUsername: 'abhijeet', avatar: 'https://i.pravatar.cc/150?img=11', role: 'volunteer',              privilege: 'co-owner', isOwner: true },
-      { id: 'm-v1-priya',     username: 'Priya M.',    authUsername: 'priya',    avatar: 'https://i.pravatar.cc/150?img=5',  role: 'contributing_volunteer', privilege: 'co-owner' },
-      { id: 'm-v1-rahul',     username: 'Rahul D.',    authUsername: 'rahul',    avatar: 'https://i.pravatar.cc/150?img=33', role: 'volunteer',              privilege: 'admin' },
-      { id: 'm-v1-deepa',     username: 'Deepa N.',                               avatar: 'https://i.pravatar.cc/150?img=25', role: 'volunteer',              privilege: 'viewer' },
-    ],
-    // v2: priya = owner, abhijeet = viewer, rahul = buyer
-    v2: [
-      { id: 'owner-v2',       username: 'Priya M.',    authUsername: 'priya',    avatar: 'https://i.pravatar.cc/150?img=5',  role: 'volunteer',              privilege: 'co-owner', isOwner: true },
-      { id: 'm-v2-abhijeet',  username: 'Abhijeet P.', authUsername: 'abhijeet', avatar: 'https://i.pravatar.cc/150?img=11', role: 'volunteer',              privilege: 'viewer' },
-      { id: 'm-v2-rahul',     username: 'Rahul D.',    authUsername: 'rahul',    avatar: 'https://i.pravatar.cc/150?img=33', role: 'contributing_volunteer', privilege: 'buyer' },
-      { id: 'm-v2-anita',     username: 'Anita R.',                               avatar: 'https://i.pravatar.cc/150?img=44', role: 'contributing_volunteer', privilege: 'buyer' },
-    ],
-    // v3: abhijeet = owner, priya = viewer, rahul = admin
-    v3: [
-      { id: 'owner-v3',       username: 'Abhijeet P.', authUsername: 'abhijeet', avatar: 'https://i.pravatar.cc/150?img=11', role: 'volunteer', privilege: 'co-owner', isOwner: true },
-      { id: 'm-v3-priya',     username: 'Priya M.',    authUsername: 'priya',    avatar: 'https://i.pravatar.cc/150?img=5',  role: 'volunteer', privilege: 'viewer' },
-      { id: 'm-v3-rahul',     username: 'Rahul D.',    authUsername: 'rahul',    avatar: 'https://i.pravatar.cc/150?img=33', role: 'volunteer', privilege: 'admin' },
-      { id: 'm-v3-suresh',    username: 'Suresh K.',                              avatar: 'https://i.pravatar.cc/150?img=20', role: 'volunteer', privilege: 'viewer' },
-    ],
-    // v5: abhijeet = co-owner, priya = admin, rahul = viewer
-    v5: [
-      { id: 'owner-v5',       username: 'Kiran B.',                               avatar: 'https://i.pravatar.cc/150?img=7',  role: 'volunteer', privilege: 'co-owner', isOwner: true },
-      { id: 'm-v5-abhijeet',  username: 'Abhijeet P.', authUsername: 'abhijeet', avatar: 'https://i.pravatar.cc/150?img=11', role: 'sponsor',   privilege: 'co-owner' },
-      { id: 'm-v5-priya',     username: 'Priya M.',    authUsername: 'priya',    avatar: 'https://i.pravatar.cc/150?img=5',  role: 'volunteer', privilege: 'admin' },
-      { id: 'm-v5-rahul',     username: 'Rahul D.',    authUsername: 'rahul',    avatar: 'https://i.pravatar.cc/150?img=33', role: 'volunteer', privilege: 'viewer' },
-    ],
-    // v6: abhijeet = co-owner
-    v6: [
-      { id: 'owner-v6',       username: 'Meera K.',                               avatar: 'https://i.pravatar.cc/150?img=9',  role: 'volunteer',              privilege: 'co-owner', isOwner: true },
-      { id: 'm-v6-abhijeet',  username: 'Abhijeet P.', authUsername: 'abhijeet', avatar: 'https://i.pravatar.cc/150?img=11', role: 'contributing_volunteer', privilege: 'co-owner' },
-      { id: 'm-v6-farhan',    username: 'Farhan A.',                              avatar: 'https://i.pravatar.cc/150?img=15', role: 'volunteer',              privilege: 'viewer' },
-    ],
-    // v7: rahul = owner, priya = admin
-    v7: [
-      { id: 'owner-v7',       username: 'Rahul D.',    authUsername: 'rahul',    avatar: 'https://i.pravatar.cc/150?img=33', role: 'volunteer', privilege: 'co-owner', isOwner: true },
-      { id: 'm-v7-priya',     username: 'Priya M.',    authUsername: 'priya',    avatar: 'https://i.pravatar.cc/150?img=5',  role: 'volunteer', privilege: 'admin' },
-      { id: 'm-v7-suresh',    username: 'Suresh P.',                              avatar: 'https://i.pravatar.cc/150?img=60', role: 'volunteer', privilege: 'viewer' },
-    ],
-    // v8: priya = owner, rahul = viewer
-    v8: [
-      { id: 'owner-v8',       username: 'Priya M.',    authUsername: 'priya',    avatar: 'https://i.pravatar.cc/150?img=5',  role: 'volunteer',              privilege: 'co-owner', isOwner: true },
-      { id: 'm-v8-rahul',     username: 'Rahul D.',    authUsername: 'rahul',    avatar: 'https://i.pravatar.cc/150?img=33', role: 'contributing_volunteer', privilege: 'viewer' },
-      { id: 'm-v8-farhan',    username: 'Farhan A.',                              avatar: 'https://i.pravatar.cc/150?img=15', role: 'volunteer',              privilege: 'buyer' },
-    ],
-    // v9: rahul = co-owner, abhijeet = admin
-    v9: [
-      { id: 'owner-v9',       username: 'Nisha T.',                               avatar: 'https://i.pravatar.cc/150?img=47', role: 'volunteer', privilege: 'co-owner', isOwner: true },
-      { id: 'm-v9-rahul',     username: 'Rahul D.',    authUsername: 'rahul',    avatar: 'https://i.pravatar.cc/150?img=33', role: 'volunteer', privilege: 'co-owner' },
-      { id: 'm-v9-abhijeet',  username: 'Abhijeet P.', authUsername: 'abhijeet', avatar: 'https://i.pravatar.cc/150?img=11', role: 'volunteer', privilege: 'admin' },
-    ],
+    id: raw.id,
+    name: raw.title,
+    location: raw.location ?? "",
+    coordinates: { lat: raw.lat ?? 0, lng: raw.lng ?? 0 },
+    description: raw.description ?? "",
+    status: (raw.status as VentureStatus) ?? "proposed",
+    scope: ["clean"],
+    category: "Community",
+    isFree: (raw.budget ?? 0) === 0,
+    budget: raw.budget ?? 0,
+    currentFunding: raw.spent ?? 0,
+    eac: raw.max_members > 0 ? Math.round((raw.budget ?? 0) / raw.max_members) : 0,
+    volunteersJoined: raw.member_count ?? 0,
+    volunteersRequired: raw.max_members ?? 20,
+    startDate: raw.start_date ?? "",
+    endDate: raw.end_date ?? "",
+    images: raw.cover_image_url ? [raw.cover_image_url] : ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600"],
+    tags: [],
+    ownerName: raw.profiles?.full_name ?? raw.profiles?.username ?? "Organiser",
+    ownerAvatar: raw.profiles?.avatar_url ?? `https://i.pravatar.cc/150?u=${raw.owner_id}`,
+    ownerStats: { completed: 0, rating: 4.5 },
+    myRole: myRole ? mapBackendRole(myRole) : undefined,
+    myPrivilege: myRole ? mapBackendPrivilege(myRole) : undefined,
   };
 }
 
-function buildInitialVentureTxs(): VentureTxsMap {
-  const map: VentureTxsMap = {};
-  MOCK_TRANSACTIONS.forEach(tx => {
-    if (!map[tx.ventureId]) map[tx.ventureId] = [];
-    map[tx.ventureId].push(tx);
-  });
-  return map;
+function mapBackendRole(role: string): UserRole {
+  if (role === "owner" || role === "co-organiser") return "contributing_volunteer";
+  return "volunteer";
 }
 
-/** Build initial join requests map from MOCK_JOIN_REQUESTS (all start as pending) */
-function buildInitialJoinRequests(): JoinRequestsMap {
-  const map: JoinRequestsMap = {};
-  MOCK_JOIN_REQUESTS.forEach(req => {
-    if (!map[req.ventureId]) map[req.ventureId] = [];
-    map[req.ventureId].push({ ...req, status: req.status ?? 'pending' });
-  });
-  return map;
+function mapBackendPrivilege(role: string): UserPrivilege {
+  if (role === "owner") return "co-owner";
+  if (role === "co-organiser") return "admin";
+  return "viewer";
+}
+
+/** Maps a backend member row to the frontend VentureMember shape */
+function adaptMember(raw: any): VentureMember {
+  const profile = raw.profiles ?? {};
+  return {
+    id: profile.id ?? raw.user_id ?? Math.random().toString(),
+    username: profile.full_name ?? profile.username ?? "Member",
+    authUsername: profile.username,
+    avatar: profile.avatar_url ?? `https://i.pravatar.cc/150?u=${profile.username ?? "user"}`,
+    role: mapBackendRole(raw.role) as UserRole,
+    privilege: mapBackendPrivilege(raw.role) as UserPrivilege,
+    isOwner: raw.role === "owner",
+  };
+}
+
+/** Maps a backend task row to the frontend Task shape */
+function adaptTask(raw: any): Task {
+  return {
+    id: raw.id,
+    ventureId: raw.venture_id,
+    title: raw.title,
+    description: raw.description ?? "",
+    tag: raw.status === "done" ? "done" : raw.status === "in_progress" ? "in-progress" : "open",
+    completed: raw.status === "done",
+    dueDate: raw.due_date ?? undefined,
+    assignees: raw.assigned_to ? [raw.assigned_to] : [],
+    assigneeNames: raw.profiles?.username ? [raw.profiles.username] : [],
+    assigneeAvatars: raw.profiles?.avatar_url ? [raw.profiles.avatar_url] : [],
+  };
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
-type ContextValue = {
+type VenturesContextValue = {
   ventures: Venture[];
   tasks: TasksMap;
   joinRequests: JoinRequestsMap;
@@ -315,15 +246,10 @@ type ContextValue = {
   addTask: (ventureId: string, task: Task) => void;
   updateTask: (ventureId: string, taskId: string, patch: Partial<Task>) => void;
   getTasksForVenture: (ventureId: string) => Task[];
-  /** Add a new join request object (full JoinRequest) */
   addJoinRequest: (ventureId: string, request: JoinRequest) => void;
-  /** Check if the current user has a pending/submitted request for a venture */
   hasRequestedJoin: (ventureId: string, authUsername?: string) => boolean;
-  /** Get all join requests for a venture */
   getJoinRequestsForVenture: (ventureId: string) => JoinRequest[];
-  /** Update the status of a specific join request */
-  updateJoinRequestStatus: (ventureId: string, requestId: string, status: 'approved' | 'denied') => void;
-  /** Reject all pending requests for a venture (called on venture completion) */
+  updateJoinRequestStatus: (ventureId: string, requestId: string, status: "approved" | "denied") => void;
   rejectAllPendingRequests: (ventureId: string) => void;
   getMembersForVenture: (ventureId: string) => VentureMember[];
   addMember: (ventureId: string, member: VentureMember) => void;
@@ -331,18 +257,16 @@ type ContextValue = {
   updateMember: (ventureId: string, memberId: string, patch: Partial<VentureMember>) => void;
   getVentureTxs: (ventureId: string) => Transaction[];
   addVentureTx: (ventureId: string, tx: Transaction) => void;
-  /** Returns the member record for the given auth username in a venture, or null if not a member */
   getMemberForUser: (ventureId: string, authUsername: string) => VentureMember | null;
-  /** All pledges for a venture */
   getPledgesForVenture: (ventureId: string) => Pledge[];
-  /** Record a pledge (overwrites existing pledge for same user+venture) */
   recordPledge: (pledge: Pledge) => void;
-  /** Remove a pledge (on refund or withdrawal) */
   removePledge: (ventureId: string, authUsername: string) => void;
+  refreshVentures: () => Promise<void>;
+  refreshTasksForVenture: (ventureId: string) => Promise<void>;
 };
 
-const VenturesContext = createContext<ContextValue>({
-  ventures: MOCK_VENTURES,
+const VenturesContext = createContext<VenturesContextValue>({
+  ventures: [],
   tasks: {},
   joinRequests: {},
   members: {},
@@ -369,151 +293,193 @@ const VenturesContext = createContext<ContextValue>({
   getPledgesForVenture: () => [],
   recordPledge: () => {},
   removePledge: () => {},
+  refreshVentures: async () => {},
+  refreshTasksForVenture: async () => {},
 });
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function VenturesProvider({ children }: { children: React.ReactNode }) {
-  const initialTasks: TasksMap = {};
-  MOCK_TASKS.forEach(t => {
-    if (!initialTasks[t.ventureId]) initialTasks[t.ventureId] = [];
-    initialTasks[t.ventureId].push(t);
-  });
-
-  const initialMembers = buildInitialMembers();
-  const initialVentureTxs = buildInitialVentureTxs();
-  const initialJoinRequests = buildInitialJoinRequests();
-
+  const { user } = useAuth();
   const [state, dispatch] = useReducer(reducer, {
-    ventures: MOCK_VENTURES,
-    tasks: initialTasks,
-    joinRequests: initialJoinRequests,
-    members: initialMembers,
-    ventureTxs: initialVentureTxs,
+    ventures: [],
+    tasks: {},
+    joinRequests: {},
+    members: {},
+    ventureTxs: {},
     pledges: {},
     loaded: false,
   });
 
-  // Load from AsyncStorage on mount
+  // Load local-only data (join requests, venture txs, pledges) from AsyncStorage
   useEffect(() => {
     (async () => {
       try {
-        const [rawVentures, rawTasks, rawJoinRequests, rawMembers, rawVentureTxs, rawPledges] = await Promise.all([
-          AsyncStorage.getItem(VENTURES_KEY),
-          AsyncStorage.getItem(TASKS_KEY),
+        const [rawJR, rawTxs, rawPledges] = await Promise.all([
           AsyncStorage.getItem(JOIN_REQUESTS_KEY),
-          AsyncStorage.getItem(MEMBERS_KEY),
           AsyncStorage.getItem(VENTURE_TXS_KEY),
           AsyncStorage.getItem(PLEDGES_KEY),
         ]);
-
-        // Merge ventures
-        let ventures = MOCK_VENTURES;
-        if (rawVentures) {
-          const saved: Venture[] = JSON.parse(rawVentures);
-          const savedIds = new Set(saved.map(v => v.id));
-          ventures = [...saved, ...MOCK_VENTURES.filter(v => !savedIds.has(v.id))];
-        }
-
-        // Merge tasks (saved takes precedence per venture)
-        let tasks: TasksMap = { ...initialTasks };
-        if (rawTasks) {
-          const savedTasks: TasksMap = JSON.parse(rawTasks);
-          tasks = { ...initialTasks, ...savedTasks };
-        }
-
-        // Merge join requests (saved takes precedence per venture)
-        let joinRequests: JoinRequestsMap = { ...initialJoinRequests };
-        if (rawJoinRequests) {
-          const saved: JoinRequestsMap = JSON.parse(rawJoinRequests);
-          joinRequests = { ...initialJoinRequests, ...saved };
-        }
-
-        // Check schema version — if outdated, reset members to seed data
-        const savedSchemaVersion = await AsyncStorage.getItem(SCHEMA_VERSION_KEY);
-        const schemaOutdated = savedSchemaVersion !== CURRENT_SCHEMA_VERSION;
-        if (schemaOutdated) {
-          await AsyncStorage.setItem(SCHEMA_VERSION_KEY, CURRENT_SCHEMA_VERSION);
-          await AsyncStorage.removeItem(MEMBERS_KEY);
-        }
-
-        // Merge members: additive merge — keep saved members + add any seed members missing from saved
-        let members: MembersMap = { ...initialMembers };
-        if (rawMembers && !schemaOutdated) {
-          const savedMembers: MembersMap = JSON.parse(rawMembers);
-          // For each venture, merge saved members but ensure authUsername is set from seed
-          // and add any seed members that are missing from the saved list
-          const allVentureIds = new Set([...Object.keys(savedMembers), ...Object.keys(initialMembers)]);
-          for (const ventureId of allVentureIds) {
-            const seedMembers = initialMembers[ventureId] ?? [];
-            const saved = savedMembers[ventureId] ?? [];
-            // Build a lookup of authUsername from seed by member id
-            const seedById = new Map(seedMembers.map(m => [m.id, m]));
-            // Backfill authUsername on saved members
-            const mergedSaved = saved.map(m => {
-              if (!m.authUsername) {
-                const seed = seedById.get(m.id);
-                if (seed?.authUsername) return { ...m, authUsername: seed.authUsername };
-              }
-              return m;
-            });
-            // Add seed members whose id is not in the saved list (e.g., owner records added later)
-            const savedIds = new Set(mergedSaved.map(m => m.id));
-            const missingSeedMembers = seedMembers.filter(m => !savedIds.has(m.id));
-            members[ventureId] = [...mergedSaved, ...missingSeedMembers];
-          }
-        }
-
-        // Merge venture transactions (saved takes precedence per venture)
-        let ventureTxs: VentureTxsMap = { ...initialVentureTxs };
-        if (rawVentureTxs) {
-          const savedTxs: VentureTxsMap = JSON.parse(rawVentureTxs);
-          ventureTxs = { ...initialVentureTxs, ...savedTxs };
-        }
-
-        const pledges: PledgesMap = rawPledges ? JSON.parse(rawPledges) : {};
-
-        dispatch({ type: "LOAD", ventures, tasks, joinRequests, members, ventureTxs, pledges });
+        dispatch({
+          type: "LOAD_LOCAL",
+          joinRequests: rawJR ? JSON.parse(rawJR) : {},
+          ventureTxs: rawTxs ? JSON.parse(rawTxs) : {},
+          pledges: rawPledges ? JSON.parse(rawPledges) : {},
+          loaded: true,
+        });
       } catch {
-        dispatch({ type: "LOAD", ventures: MOCK_VENTURES, tasks: initialTasks, joinRequests: initialJoinRequests, members: initialMembers, ventureTxs: initialVentureTxs, pledges: {} });
+        dispatch({ type: "LOAD_LOCAL", joinRequests: {}, ventureTxs: {}, pledges: {}, loaded: true });
       }
     })();
   }, []);
 
-  // Persist to AsyncStorage whenever state changes (after initial load)
+  // Persist local-only data whenever it changes
   useEffect(() => {
     if (!state.loaded) return;
-    AsyncStorage.setItem(VENTURES_KEY, JSON.stringify(state.ventures)).catch(() => {});
-    AsyncStorage.setItem(TASKS_KEY, JSON.stringify(state.tasks)).catch(() => {});
     AsyncStorage.setItem(JOIN_REQUESTS_KEY, JSON.stringify(state.joinRequests)).catch(() => {});
-    AsyncStorage.setItem(MEMBERS_KEY, JSON.stringify(state.members)).catch(() => {});
     AsyncStorage.setItem(VENTURE_TXS_KEY, JSON.stringify(state.ventureTxs)).catch(() => {});
     AsyncStorage.setItem(PLEDGES_KEY, JSON.stringify(state.pledges)).catch(() => {});
-  }, [state.ventures, state.tasks, state.joinRequests, state.members, state.ventureTxs, state.pledges, state.loaded]);
+  }, [state.joinRequests, state.ventureTxs, state.pledges, state.loaded]);
 
-  const addVenture = useCallback((v: Venture, ownerMember?: VentureMember) => {
+  // Fetch ventures from API whenever user changes
+  const fetchVentures = useCallback(async () => {
+    if (!user) return;
+    try {
+      // Fetch "My Ventures" (ventures user is a member of)
+      const myRaw: any[] = await api.get("/ventures?mine=true");
+      // Fetch all public ventures (Discover)
+      const allRaw: any[] = await api.get("/ventures");
+
+      // Build a set of venture IDs the user is a member of
+      const myIds = new Set(myRaw.map((r: any) => r.id));
+
+      // Build members map from my ventures (they include my_role)
+      const membersMap: MembersMap = {};
+
+      // Adapt my ventures first (with role)
+      const myVentures = myRaw.map((raw: any) => {
+        const adapted = adaptVenture(raw, raw.my_role);
+        // For my ventures, we know the current user's member entry
+        membersMap[raw.id] = [{
+          id: user.id,
+          username: user.displayName,
+          authUsername: user.username,
+          avatar: user.avatar,
+          role: mapBackendRole(raw.my_role),
+          privilege: mapBackendPrivilege(raw.my_role),
+          isOwner: raw.my_role === "owner",
+        }];
+        return adapted;
+      });
+
+      // Adapt all public ventures (merge, avoid duplicates)
+      const discoverVentures = allRaw
+        .filter((r: any) => !myIds.has(r.id))
+        .map((raw: any) => adaptVenture(raw));
+
+      const allVentures = [...myVentures, ...discoverVentures];
+
+      dispatch({ type: "SET_VENTURES", ventures: allVentures, members: membersMap });
+    } catch (err) {
+      console.warn("Failed to fetch ventures from API:", err);
+      // Keep existing state — don't wipe ventures on network error
+    }
+  }, [user]);
+
+  const prevUserId = useRef<string | null>(null);
+  useEffect(() => {
+    if (user?.id !== prevUserId.current) {
+      prevUserId.current = user?.id ?? null;
+      fetchVentures();
+    }
+  }, [user, fetchVentures]);
+
+  // ─── Callbacks ──────────────────────────────────────────────────────────────
+
+  const addVenture = useCallback(async (v: Venture, ownerMember?: VentureMember) => {
+    // Optimistic local add
     dispatch({ type: "ADD_VENTURE", venture: v, ownerMember });
+    // Sync to backend
+    try {
+      const created: any = await api.post("/ventures", {
+        title: v.name,
+        description: v.description,
+        location: v.location,
+        lat: v.coordinates?.lat,
+        lng: v.coordinates?.lng,
+        max_members: v.volunteersRequired ?? 20,
+        start_date: v.startDate || undefined,
+        end_date: v.endDate || undefined,
+        budget: v.budget ?? 0,
+        cover_image_url: v.images?.[0] && v.images[0].startsWith("http") ? v.images[0] : undefined,
+      });
+      // Replace optimistic entry with real backend ID
+      if (created?.id && created.id !== v.id) {
+        dispatch({ type: "UPDATE_VENTURE", id: v.id, patch: { id: created.id } });
+      }
+    } catch (err) {
+      console.warn("Failed to create venture on backend:", err);
+    }
   }, []);
 
   const updateVenture = useCallback((id: string, patch: Partial<Venture>) => {
     dispatch({ type: "UPDATE_VENTURE", id, patch });
+    // Sync to backend (best-effort)
+    const backendPatch: any = {};
+    if (patch.name) backendPatch.title = patch.name;
+    if (patch.description !== undefined) backendPatch.description = patch.description;
+    if (patch.location !== undefined) backendPatch.location = patch.location;
+    if (patch.status !== undefined) backendPatch.status = patch.status;
+    if (patch.budget !== undefined) backendPatch.budget = patch.budget;
+    if (Object.keys(backendPatch).length > 0) {
+      api.patch(`/ventures/${id}`, backendPatch).catch(() => {});
+    }
   }, []);
 
   const updateVentureStatus = useCallback((id: string, status: VentureStatus) => {
     dispatch({ type: "UPDATE_VENTURE", id, patch: { status } });
+    api.patch(`/ventures/${id}`, { status }).catch(() => {});
   }, []);
 
-  const addTask = useCallback((ventureId: string, task: Task) => {
+  const addTask = useCallback(async (ventureId: string, task: Task) => {
     dispatch({ type: "ADD_TASK", ventureId, task });
+    try {
+      await api.post(`/ventures/${ventureId}/tasks`, {
+        title: task.title,
+        description: task.description || undefined,
+        due_date: task.dueDate || undefined,
+      });
+    } catch (err) {
+      console.warn("Failed to create task on backend:", err);
+    }
   }, []);
 
-  const updateTask = useCallback((ventureId: string, taskId: string, patch: Partial<Task>) => {
+  const updateTask = useCallback(async (ventureId: string, taskId: string, patch: Partial<Task>) => {
     dispatch({ type: "UPDATE_TASK", ventureId, taskId, patch });
+    const backendPatch: any = {};
+    if (patch.title !== undefined) backendPatch.title = patch.title;
+    if (patch.description !== undefined) backendPatch.description = patch.description;
+    if (patch.completed !== undefined) backendPatch.status = patch.completed ? "done" : "open";
+    if (patch.dueDate !== undefined) backendPatch.due_date = patch.dueDate;
+    if (Object.keys(backendPatch).length > 0) {
+      api.patch(`/ventures/${ventureId}/tasks/${taskId}`, backendPatch).catch(() => {});
+    }
   }, []);
 
   const getTasksForVenture = useCallback((ventureId: string): Task[] => {
     return state.tasks[ventureId] ?? [];
   }, [state.tasks]);
+
+  // Fetch tasks for a specific venture from API (called by venture detail screen)
+  const fetchTasksForVenture = useCallback(async (ventureId: string) => {
+    try {
+      const raw: any[] = await api.get(`/ventures/${ventureId}/tasks`);
+      const tasks = raw.map(adaptTask);
+      dispatch({ type: "SET_TASKS", ventureId, tasks });
+    } catch (err) {
+      console.warn("Failed to fetch tasks:", err);
+    }
+  }, []);
 
   const addJoinRequest = useCallback((ventureId: string, request: JoinRequest) => {
     dispatch({ type: "ADD_JOIN_REQUEST", ventureId, request });
@@ -521,9 +487,7 @@ export function VenturesProvider({ children }: { children: React.ReactNode }) {
 
   const hasRequestedJoin = useCallback((ventureId: string, authUsername?: string): boolean => {
     const requests = state.joinRequests[ventureId] ?? [];
-    if (authUsername) {
-      return requests.some(r => r.authUsername === authUsername && (!r.status || r.status === 'pending'));
-    }
+    if (authUsername) return requests.some(r => r.authUsername === authUsername && (!r.status || r.status === "pending"));
     return requests.length > 0;
   }, [state.joinRequests]);
 
@@ -531,7 +495,7 @@ export function VenturesProvider({ children }: { children: React.ReactNode }) {
     return state.joinRequests[ventureId] ?? [];
   }, [state.joinRequests]);
 
-  const updateJoinRequestStatus = useCallback((ventureId: string, requestId: string, status: 'approved' | 'denied') => {
+  const updateJoinRequestStatus = useCallback((ventureId: string, requestId: string, status: "approved" | "denied") => {
     dispatch({ type: "UPDATE_JOIN_REQUEST_STATUS", ventureId, requestId, status });
   }, []);
 
@@ -580,6 +544,14 @@ export function VenturesProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "REMOVE_PLEDGE", ventureId, authUsername });
   }, []);
 
+  const refreshVentures = useCallback(async () => {
+    await fetchVentures();
+  }, [fetchVentures]);
+
+  const refreshTasksForVenture = useCallback(async (ventureId: string) => {
+    await fetchTasksForVenture(ventureId);
+  }, [fetchTasksForVenture]);
+
   return (
     <VenturesContext.Provider value={{
       ventures: state.ventures,
@@ -609,6 +581,8 @@ export function VenturesProvider({ children }: { children: React.ReactNode }) {
       getPledgesForVenture,
       recordPledge,
       removePledge,
+      refreshVentures,
+      refreshTasksForVenture,
     }}>
       {children}
     </VenturesContext.Provider>
