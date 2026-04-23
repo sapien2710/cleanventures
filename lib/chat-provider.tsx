@@ -54,6 +54,7 @@ export function StreamChatProvider({ children }: { children: React.ReactNode }) 
   const [isReady, setIsReady] = useState(false);
   const connectedUserId = useRef<string | null>(null);
   const channelCache = useRef<Record<string, Channel>>({});
+  const connectingRef = useRef(false);
 
   useEffect(() => {
     const client = getStreamClient();
@@ -63,6 +64,7 @@ export function StreamChatProvider({ children }: { children: React.ReactNode }) 
       if (connectedUserId.current) {
         client.disconnectUser().then(() => {
           connectedUserId.current = null;
+          connectingRef.current = false;
           setIsReady(false);
           channelCache.current = {};
         }).catch(() => {});
@@ -73,38 +75,48 @@ export function StreamChatProvider({ children }: { children: React.ReactNode }) 
     // Already connected as this user — skip
     if (connectedUserId.current === user.id) return;
 
+    // Prevent duplicate concurrent connect attempts
+    if (connectingRef.current) return;
+    connectingRef.current = true;
+
     // If connected as a different user, disconnect first
-    if (connectedUserId.current && connectedUserId.current !== user.id) {
-      client.disconnectUser().catch(() => {});
-      connectedUserId.current = null;
-      setIsReady(false);
-      channelCache.current = {};
-    }
-
-    async function connectUser() {
-      try {
-        const res = await api.get<{
-          token: string;
-          user_id: string;
-          user_name: string;
-        }>("/chat/token");
-
-        await client.connectUser(
-          { id: res.user_id, name: res.user_name },
-          res.token
-        );
-
-        connectedUserId.current = user!.id;
-        setIsReady(true);
-        console.log("[StreamChat] Connected as", res.user_name);
-      } catch (err) {
-        console.warn("[StreamChat] Failed to connect:", err);
-        // Retry after 3 seconds
-        setTimeout(connectUser, 3000);
+    const doConnect = async () => {
+      if (connectedUserId.current && connectedUserId.current !== user.id) {
+        try { await client.disconnectUser(); } catch {}
+        connectedUserId.current = null;
+        setIsReady(false);
+        channelCache.current = {};
       }
-    }
 
-    connectUser();
+      async function connectUser() {
+        try {
+          const res = await api.get<{
+            token: string;
+            user_id: string;
+            user_name: string;
+          }>("/chat/token");
+
+          await client.connectUser(
+            { id: res.user_id, name: res.user_name },
+            res.token
+          );
+
+          connectedUserId.current = user!.id;
+          connectingRef.current = false;
+          setIsReady(true);
+          console.log("[StreamChat] Connected as", res.user_name);
+        } catch (err) {
+          console.warn("[StreamChat] Failed to connect:", err);
+          connectingRef.current = false;
+          // Retry after 3 seconds
+          setTimeout(connectUser, 3000);
+        }
+      }
+
+      connectUser();
+    };
+
+    doConnect();
   }, [user?.id]);
 
   const getChannel = useCallback((ventureId: string): Channel | null => {
@@ -114,23 +126,25 @@ export function StreamChatProvider({ children }: { children: React.ReactNode }) 
   const loadChannel = useCallback(async (ventureId: string, ventureName: string): Promise<Channel | null> => {
     const client = getStreamClient();
 
-    // Wait up to 3 seconds for Stream to be ready (it should already be ready when called)
+    // Wait up to 5 seconds for the Stream client to actually be connected
+    // We check client.userID (set by Stream SDK after connectUser resolves) not just our ref
     let waited = 0;
-    while (!connectedUserId.current && waited < 3000) {
+    while (!client.userID && waited < 5000) {
       await new Promise(r => setTimeout(r, 200));
       waited += 200;
     }
 
-    if (!connectedUserId.current) {
-      console.warn("[StreamChat] Not connected after waiting, cannot load channel");
+    if (!client.userID) {
+      console.warn("[StreamChat] Client not connected after waiting, cannot load channel");
       return null;
     }
 
     const channelId = `venture-${ventureId}`;
 
-    // Check cache first
-    if (channelCache.current[ventureId]) {
-      return channelCache.current[ventureId];
+    // Check cache first (but only if the cached channel belongs to current user)
+    const cached = channelCache.current[ventureId];
+    if (cached) {
+      return cached;
     }
 
     try {
@@ -172,8 +186,10 @@ export function StreamChatProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   /**
-   * Add the currently logged-in user to a venture's Stream channel.
+   * Add a user to a venture's Stream channel.
    * Called when a join request is approved so the new member can access chat.
+   * Pass targetUserId to add a specific user (owner approving someone);
+   * omit to add the caller themselves.
    */
   const addMemberToChannel = useCallback(async (ventureId: string, targetUserId?: string): Promise<boolean> => {
     try {

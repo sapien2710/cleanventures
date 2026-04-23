@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Alert, FlatList, Image, Pressable, Text, TextInput,
-  View, KeyboardAvoidingView, Platform, ActivityIndicator,
+  View, KeyboardAvoidingView, Platform, ActivityIndicator, TouchableOpacity,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -159,38 +159,43 @@ export default function ChatScreen() {
   const [sending, setSending] = useState(false);
   const [chatError, setChatError] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const initDoneRef = useRef(false);
+  // Track which user we loaded for — reset when user changes
+  const loadedForUserRef = useRef<string | null>(null);
 
-  // Load the Stream channel — runs immediately when isReady becomes true,
-  // and also retries if isReady was already true when we mounted.
-  useEffect(() => {
-    if (!id || !isReady || initDoneRef.current) return;
-    initDoneRef.current = true;
+  const doLoad = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setChatError(false);
+    setChannel(null);
+    setMessages([]);
 
-    async function init() {
-      setLoading(true);
-      setChatError(false);
-      const ch = await loadChannel(id!, ventureName);
-      if (!ch) {
-        setLoading(false);
-        setChatError(true);
-        return;
-      }
-      setChannel(ch);
-
-      // Load initial messages (most recent 50)
-      const state = ch.state;
-      const msgs = Object.values(state.messages) as MessageResponse[];
-      setMessages(msgs.sort((a, b) => {
-        const ta = typeof a.created_at === "string" ? a.created_at : (a.created_at as Date).toISOString();
-        const tb = typeof b.created_at === "string" ? b.created_at : (b.created_at as Date).toISOString();
-        return ta.localeCompare(tb);
-      }));
+    const ch = await loadChannel(id, ventureName);
+    if (!ch) {
       setLoading(false);
+      setChatError(true);
+      return;
     }
+    setChannel(ch);
 
-    init();
-  }, [isReady, id]);
+    // Load initial messages
+    const state = ch.state;
+    const msgs = Object.values(state.messages) as MessageResponse[];
+    setMessages(msgs.sort((a, b) => {
+      const ta = typeof a.created_at === "string" ? a.created_at : (a.created_at as Date).toISOString();
+      const tb = typeof b.created_at === "string" ? b.created_at : (b.created_at as Date).toISOString();
+      return ta.localeCompare(tb);
+    }));
+    setLoading(false);
+  }, [id, ventureName, loadChannel]);
+
+  // Load channel whenever isReady becomes true OR the current user changes
+  useEffect(() => {
+    if (!isReady || !id) return;
+    // If we already loaded for this user, skip (avoid double-load on re-renders)
+    if (loadedForUserRef.current === authUser?.id && channel) return;
+    loadedForUserRef.current = authUser?.id ?? null;
+    doLoad();
+  }, [isReady, id, authUser?.id]);
 
   // Subscribe to new messages
   useEffect(() => {
@@ -199,7 +204,6 @@ export default function ChatScreen() {
     const handleNewMessage = (event: Event) => {
       if (event.message) {
         setMessages((prev) => {
-          // Avoid duplicates
           if (prev.find((m) => m.id === event.message!.id)) return prev;
           return [...prev, event.message as MessageResponse];
         });
@@ -230,7 +234,7 @@ export default function ChatScreen() {
       await channel.sendMessage({ text });
     } catch (err) {
       Alert.alert("Error", "Failed to send message. Please try again.");
-      setMessageText(text); // restore text on failure
+      setMessageText(text);
     } finally {
       setSending(false);
     }
@@ -343,7 +347,7 @@ export default function ChatScreen() {
                 style={{
                   alignItems: "center",
                   paddingTop: 60,
-                  gap: 8,
+                  gap: 12,
                 }}
               >
                 <IconSymbol
@@ -354,15 +358,37 @@ export default function ChatScreen() {
                 <Text style={{ fontSize: 15, color: colors.muted }}>
                   {chatError ? "Chat unavailable" : "No messages yet"}
                 </Text>
-                <Text style={{ fontSize: 13, color: colors.muted }}>
-                  {chatError ? "Could not connect to chat. Try again later." : "Be the first to say something!"}
+                <Text style={{ fontSize: 13, color: colors.muted, textAlign: "center", paddingHorizontal: 32 }}>
+                  {chatError
+                    ? "Could not connect to chat."
+                    : "Be the first to say something!"}
                 </Text>
+                {chatError && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      loadedForUserRef.current = null;
+                      doLoad();
+                    }}
+                    activeOpacity={0.8}
+                    style={{
+                      marginTop: 4,
+                      backgroundColor: colors.primary,
+                      borderRadius: 12,
+                      paddingHorizontal: 24,
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Text style={{ color: "white", fontWeight: "700", fontSize: 14 }}>
+                      Try Again
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             }
           />
         )}
 
-        {/* Input bar — fixed row so send button never disappears */}
+        {/* Input bar */}
         <View
           style={{
             flexDirection: "row",
@@ -375,7 +401,7 @@ export default function ChatScreen() {
             backgroundColor: colors.surface,
           }}
         >
-          {/* Text input — flex:1 so it fills available space */}
+          {/* Text input */}
           <View
             style={{
               flex: 1,
@@ -398,7 +424,6 @@ export default function ChatScreen() {
                 fontSize: 14,
                 color: colors.foreground,
                 lineHeight: 20,
-                // Explicit max height so the input doesn't grow forever
                 maxHeight: 100,
               }}
               multiline
