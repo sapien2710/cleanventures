@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Alert, ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImage } from "@/lib/upload";
@@ -16,6 +16,7 @@ import { useCart } from "@/lib/cart-store";
 import { useNotifications } from "@/lib/notifications-store";
 import { useAuth } from "@/lib/auth-store";
 import { useActivity } from "@/lib/activity-store";
+import { useStreamChat } from "@/lib/chat-provider";
 import {
   MOCK_VENTURES, MOCK_TASKS, MOCK_JOIN_REQUESTS, MOCK_TRANSACTIONS,
   MOCK_PRODUCTS, MOCK_SERVICES, type Transaction, type Venture
@@ -498,7 +499,13 @@ function RequestsTab({ ventureId, isOwner, canManage = false, onApprove, onPledg
       opacity: decided ? 0.7 : 1,
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Image source={{ uri: item.avatar }} style={{ width: 48, height: 48, borderRadius: 24 }} />
+        {item.avatar ? (
+          <Image source={{ uri: item.avatar }} style={{ width: 48, height: 48, borderRadius: 24 }} />
+        ) : (
+          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
+            <IconSymbol name="person.fill" size={24} color={colors.muted} />
+          </View>
+        )}
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 15, fontWeight: '600', color: colors.foreground }}>{item.username}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
@@ -530,33 +537,31 @@ function RequestsTab({ ventureId, isOwner, canManage = false, onApprove, onPledg
 
       {decided ? (
         <View style={{
-          borderRadius: 14, paddingVertical: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6,
+          borderRadius: 14, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6,
           backgroundColor: decided === 'approved' ? colors.success + '18' : colors.error + '18',
           borderWidth: 1, borderColor: decided === 'approved' ? colors.success + '40' : colors.error + '40',
         }}>
           <IconSymbol name={decided === 'approved' ? 'checkmark.circle.fill' : 'xmark.circle.fill'} size={15} color={decided === 'approved' ? colors.success : colors.error} />
-          <Text style={{ fontSize: 13, fontWeight: '700', color: decided === 'approved' ? colors.success : colors.error }}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: decided === 'approved' ? colors.success : colors.error }}>
             {decided === 'approved' ? 'Approved' : 'Denied'}
           </Text>
         </View>
       ) : isOwner ? (
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Pressable
+          <TouchableOpacity
             onPress={() => decide(item, 'denied')}
-            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, flex: 1 }]}
+            activeOpacity={0.7}
+            style={{ flex: 1, backgroundColor: colors.error + '12', borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1.5, borderColor: colors.error + '50' }}
           >
-            <View style={{ backgroundColor: colors.error + '12', borderRadius: 14, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: colors.error + '30' }}>
-              <Text style={{ color: colors.error, fontWeight: '600', fontSize: 13 }}>Deny</Text>
-            </View>
-          </Pressable>
-          <Pressable
+            <Text style={{ color: colors.error, fontWeight: '700', fontSize: 15 }}>Deny</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={() => decide(item, 'approved')}
-            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, flex: 1 }]}
+            activeOpacity={0.8}
+            style={{ flex: 1, backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}
           >
-            <View style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 11, alignItems: 'center' }}>
-              <Text style={{ color: 'white', fontWeight: '600', fontSize: 13 }}>Approve</Text>
-            </View>
-          </Pressable>
+            <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>Approve</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <View style={{ backgroundColor: colors.border + '40', borderRadius: 14, paddingVertical: 10, alignItems: 'center' }}>
@@ -1533,6 +1538,7 @@ export default function VentureDetailScreen() {
   const { user: authUser } = useAuth();
   const { emit: emitActivity } = useActivity();
   const { deduct: deductWallet, topup: topupWallet } = useWallet();
+  const { addMemberToChannel } = useStreamChat();
 
   // Fetch tasks from backend when this venture detail screen mounts
   useEffect(() => {
@@ -1746,7 +1752,11 @@ export default function VentureDetailScreen() {
           ventureId={venture.id}
           isOwner={isCoOwner}
           canManage={canDo('MANAGE_REQUESTS')}
-          onApprove={(member) => addMember(venture.id, member)}
+          onApprove={(member) => {
+            addMember(venture.id, member);
+            // Add the new member to the Stream channel so they can access chat
+            addMemberToChannel(venture.id).catch(() => {});
+          }}
           onPledgeDeduct={handlePledgeDeduct}
         />}
         {activeTab === 'tasks' && <TasksTab ventureId={venture.id} canCreate={canDo('CREATE_TASK')} canComplete={canDo('COMPLETE_TASK')} canAssign={canDo('ASSIGN_TASK')} />}
@@ -1925,9 +1935,9 @@ export default function VentureDetailScreen() {
                       const newRequest: import('@/lib/mock-data').JoinRequest = {
                         id: `jr-${Date.now()}`,
                         ventureId: venture.id,
-                        username: authUser?.displayName ?? 'Unknown',
+                        username: authUser?.username ?? authUser?.displayName ?? 'Unknown',
                         authUsername: authUser?.username,
-                        avatar: authUser?.avatar ?? 'https://i.pravatar.cc/150?img=1',
+                        avatar: authUser?.avatar ?? '',
                         rating: 4.5,
                         role: selectedRole as import('@/lib/mock-data').UserRole,
                         privilege: (selectedPrivileges[0] ?? null) as import('@/lib/mock-data').UserPrivilege | null,
