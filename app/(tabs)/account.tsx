@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
+import * as ImagePicker from 'expo-image-picker';
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -8,6 +9,7 @@ import { MOCK_USER } from "@/lib/mock-data";
 import { useVentures } from "@/lib/ventures-store";
 import { useWallet } from "@/lib/wallet-store";
 import { useAuth } from "@/lib/auth-store";
+import { uploadImage } from "@/lib/upload";
 
 const TOPUP_PRESETS = [500, 1000, 2000, 5000];
 const PAYMENT_METHODS = [
@@ -257,6 +259,31 @@ export default function AccountScreen() {
   const [editAbout, setEditAbout] = useState('');
   const [editPublicNamePref, setEditPublicNamePref] = useState<'username' | 'displayName'>('displayName');
   const [profileSaving, setProfileSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
+  const handlePickAvatar = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets[0]) {
+        setAvatarUploading(true);
+        try {
+          const remoteUrl = await uploadImage(result.assets[0].uri, 'avatar');
+          await updateProfile({ avatar: remoteUrl });
+        } catch (err: any) {
+          Alert.alert('Upload failed', err?.message ?? 'Could not upload photo.');
+        } finally {
+          setAvatarUploading(false);
+        }
+      }
+    } catch {
+      Alert.alert('Photo', 'Could not access photo library.');
+    }
+  };
 
   const user = authUser
     ? { ...MOCK_USER, name: authUser.displayName, handle: `@${authUser.username}`, avatar: authUser.avatar, city: authUser.city }
@@ -314,10 +341,16 @@ export default function AccountScreen() {
         {/* Profile card */}
         <View style={{ marginHorizontal: 16, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-            <Image
-              source={{ uri: user.avatar }}
-              style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: colors.primary }}
-            />
+            {user.avatar ? (
+              <Image
+                source={{ uri: user.avatar }}
+                style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: colors.primary }}
+              />
+            ) : (
+              <View style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: colors.primary, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+                <IconSymbol name="person.fill" size={36} color={colors.muted} />
+              </View>
+            )}
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>{user.name}</Text>
               <Text style={{ fontSize: 14, color: colors.muted, marginTop: 2 }}>{user.handle}</Text>
@@ -464,16 +497,22 @@ export default function AccountScreen() {
                   </Pressable>
                 </View>
 
-                {/* Avatar placeholder */}
-                <View style={{ alignItems: 'center', gap: 8 }}>
+                {/* Avatar upload */}
+                <Pressable onPress={handlePickAvatar} disabled={avatarUploading} style={({ pressed }) => [{ opacity: (pressed || avatarUploading) ? 0.7 : 1, alignItems: 'center', gap: 8 }]}>
                   <View style={{ position: 'relative' }}>
-                    <Image source={{ uri: authUser?.avatar }} style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: colors.primary }} />
+                    {authUser?.avatar ? (
+                      <Image source={{ uri: authUser.avatar }} style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: colors.primary }} />
+                    ) : (
+                      <View style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: colors.primary, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+                        <IconSymbol name="person.fill" size={36} color={colors.muted} />
+                      </View>
+                    )}
                     <View style={{ position: 'absolute', bottom: 0, right: 0, width: 26, height: 26, borderRadius: 13, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.surface }}>
-                      <IconSymbol name="camera.fill" size={12} color="white" />
+                      {avatarUploading ? <ActivityIndicator size="small" color="white" /> : <IconSymbol name="camera.fill" size={12} color="white" />}
                     </View>
                   </View>
-                  <Text style={{ fontSize: 12, color: colors.muted }}>Profile photo (coming soon)</Text>
-                </View>
+                  <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>{avatarUploading ? 'Uploading…' : 'Tap to change photo'}</Text>
+                </Pressable>
 
                 {/* Display Name */}
                 <View style={{ gap: 6 }}>
