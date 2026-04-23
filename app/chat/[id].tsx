@@ -161,7 +161,7 @@ export default function ChatScreen() {
 
   // Load the Stream channel when the screen mounts
   useEffect(() => {
-    if (!isReady || !id) return;
+    if (!id) return;
 
     async function init() {
       setLoading(true);
@@ -346,10 +346,10 @@ export default function ChatScreen() {
                   color={colors.border}
                 />
                 <Text style={{ fontSize: 15, color: colors.muted }}>
-                  No messages yet
+                  {channel ? "No messages yet" : "Chat unavailable"}
                 </Text>
                 <Text style={{ fontSize: 13, color: colors.muted }}>
-                  Be the first to say something!
+                  {channel ? "Be the first to say something!" : "Could not connect to chat. Try again later."}
                 </Text>
               </View>
             }
