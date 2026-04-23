@@ -4,7 +4,7 @@
  * Provides helpers to create/join venture channels.
  */
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
-import { StreamChat, type Channel, type Event, type MessageResponse } from "stream-chat";
+import { StreamChat, type Channel } from "stream-chat";
 import { useAuth } from "@/lib/auth-store";
 import { api } from "@/lib/api-client";
 
@@ -35,6 +35,7 @@ type StreamChatContextValue = {
   getChannel: (ventureId: string) => Channel | null;
   loadChannel: (ventureId: string, ventureName: string) => Promise<Channel | null>;
   createVentureChannel: (ventureId: string, ventureName: string) => Promise<string | null>;
+  addMemberToChannel: (ventureId: string) => Promise<boolean>;
 };
 
 const StreamChatContext = createContext<StreamChatContextValue>({
@@ -43,6 +44,7 @@ const StreamChatContext = createContext<StreamChatContextValue>({
   getChannel: () => null,
   loadChannel: async () => null,
   createVentureChannel: async () => null,
+  addMemberToChannel: async () => false,
 });
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -169,10 +171,27 @@ export function StreamChatProvider({ children }: { children: React.ReactNode }) 
     }
   }, []);
 
+  /**
+   * Add the currently logged-in user to a venture's Stream channel.
+   * Called when a join request is approved so the new member can access chat.
+   */
+  const addMemberToChannel = useCallback(async (ventureId: string): Promise<boolean> => {
+    try {
+      const channelId = `venture-${ventureId}`;
+      await api.post(`/chat/channel/${channelId}/members`, {});
+      // Invalidate cache so channel is re-fetched with updated membership
+      delete channelCache.current[ventureId];
+      return true;
+    } catch (err) {
+      console.warn("[StreamChat] Failed to add member to channel:", err);
+      return false;
+    }
+  }, []);
+
   const client = isReady ? getStreamClient() : null;
 
   return (
-    <StreamChatContext.Provider value={{ client, isReady, getChannel, loadChannel, createVentureChannel }}>
+    <StreamChatContext.Provider value={{ client, isReady, getChannel, loadChannel, createVentureChannel, addMemberToChannel }}>
       {children}
     </StreamChatContext.Provider>
   );
