@@ -18,45 +18,8 @@ export type Notification = {
   ventureId?: string;
 };
 
-// Seed notifications so there's something to see on first launch
-const SEED_NOTIFICATIONS: Notification[] = [
-  {
-    id: "n1",
-    type: "join_accepted",
-    title: "Request Accepted!",
-    body: "Ravi Kumar accepted your request to join LBS Road Cleanup as a Volunteer.",
-    timestamp: Date.now() - 1000 * 60 * 30,
-    read: false,
-    ventureId: "v1",
-  },
-  {
-    id: "n2",
-    type: "venture_activated",
-    title: "Venture Activated",
-    body: "Juhu Beach Mega Clean-Up has moved from Proposed to Active. Get ready!",
-    timestamp: Date.now() - 1000 * 60 * 60 * 2,
-    read: false,
-    ventureId: "v2",
-  },
-  {
-    id: "n3",
-    type: "task_assigned",
-    title: "New Task: Waste Segregation",
-    body: "You've been assigned the 'Waste Segregation' task in Sabarmati Riverfront Drive.",
-    timestamp: Date.now() - 1000 * 60 * 60 * 5,
-    read: true,
-    ventureId: "v3",
-  },
-  {
-    id: "n4",
-    type: "contribution",
-    title: "Contribution Received",
-    body: "Priya Mehta contributed ₹500 to your venture Vadodara Old City Heritage Walk.",
-    timestamp: Date.now() - 1000 * 60 * 60 * 24,
-    read: true,
-    ventureId: "v1",
-  },
-];
+// No seed notifications — start with an empty list
+const SEED_NOTIFICATIONS: Notification[] = [];
 
 type ContextValue = {
   notifications: Notification[];
